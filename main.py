@@ -3,7 +3,6 @@ import os
 import logging
 from pathlib import Path
 import asyncio
-import sys
 from src.recorder_service import start_recording
 from src.utils import load_config
 import time
@@ -44,3 +43,7 @@ if __name__ == '__main__':
     except Exception as e:
         logger.exception(f"Unhandled exception occurred: {e}")
         raise e
+    
+
+
+

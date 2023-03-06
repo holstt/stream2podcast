@@ -32,7 +32,7 @@ async def start_recording(config: Config):
                 now.date() + timedelta(days=1), next_recording.start_time) - now
 
         logger.info(
-            f"Next recording '{next_recording.name}' starts at {next_recording.start_time}. Waiting for {wait_duration}  ...")
+            f"Next recording:  '{next_recording.name}', {next_recording.start_time} - {next_recording.end_time}. Waiting for {wait_duration}  ...")
 
         await asyncio.sleep(wait_duration.total_seconds())
 
@@ -41,13 +41,13 @@ async def start_recording(config: Config):
         filepath = record_audio(
             next_recording, config.stream_url, config.output_directory)
 
-        logger.info(f"Recording complete: {filepath}")
+        logger.info(f"Recording complete. Duration: {filepath}")
 
 # Records audio until end time is reached
 
 
 def record_audio(recording_time: RecordingPeriod, stream_url: str, output_directory: str) -> str:
-    filename = f"{datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')}_{recording_time.name}.mp3"
+    filename = f"{datetime.utcnow().strftime('%Y-%m-%d__%H-%M-%S')}_{recording_time.name}.mp3"
 
     filepath = os.path.join(output_directory, filename)
     # Send a GET request to the stream URL to initiate the stream

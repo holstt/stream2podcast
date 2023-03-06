@@ -27,7 +27,7 @@ Stream2Podcast expects a config file in JSON format that specifies the live stre
 
 Note that the time periods cannot overlap as the recording process occurs sequentially.
 
-Modify `./config_example.json` and rename it to `./config.json`:
+Modify `./config.example.json` and rename it to `./config.json`:
 
 ```json
 {
