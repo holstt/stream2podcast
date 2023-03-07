@@ -32,7 +32,7 @@ async def start_recording(config: Config):
                 now.date() + timedelta(days=1), next_recording.start_time) - now
 
         logger.info(
-            f"Next recording:  '{next_recording.name}', {next_recording.start_time} - {next_recording.end_time}. Waiting for {wait_duration}  ...")
+            f"Next recording: '{next_recording.name}' from {next_recording.start_time} to {next_recording.end_time}. Waiting {wait_duration} ...")
 
         await asyncio.sleep(wait_duration.total_seconds())
 
@@ -46,8 +46,9 @@ async def start_recording(config: Config):
 # Records audio until end time is reached
 
 
-def record_audio(recording_time: RecordingPeriod, stream_url: str, output_directory: str) -> str:
-    filename = f"{datetime.utcnow().strftime('%Y-%m-%d__%H-%M-%S')}_{recording_time.name}.mp3"
+def record_audio(recording_period: RecordingPeriod, stream_url: str, output_directory: str) -> str:
+    recording_name = recording_period.name.replace(" ", "_").lower()
+    filename = f"{datetime.utcnow().strftime('%Y-%m-%d__%H-%M-%S')}_{recording_name}.mp3"
 
     filepath = os.path.join(output_directory, filename)
     # Send a GET request to the stream URL to initiate the stream
@@ -57,7 +58,7 @@ def record_audio(recording_time: RecordingPeriod, stream_url: str, output_direct
             for chunk in livestream_response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-                if datetime.utcnow().time() > recording_time.end_time:
+                if datetime.utcnow().time() > recording_period.end_time:
                     break
 
     return filepath

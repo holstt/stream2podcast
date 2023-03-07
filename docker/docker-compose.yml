@@ -1,7 +1,5 @@
 version: "3.8"
 
-# Only for building image and dev testing
-
 services:
   stream2podcast:
     restart: "always"
@@ -10,5 +8,5 @@ services:
       dockerfile: docker/Dockerfile
     # Mount config file at startup (left path should be local path of your config file)
     volumes:
-      - ${ENV_PATH:-../../config.json}:/app/config.json:ro  # Will use ENV_PATH if non-empty
-      - ./recordings:/app/recordings # Save recordings to local folder on host
+      - ${CONFIG_PATH:-../../config.json}:/app/config.json:ro  # Will use CONFIG_PATH if non-empty
+      - ../recordings:/app/recordings # Save recordings to local folder on host
