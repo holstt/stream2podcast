@@ -56,4 +56,4 @@ fi
 
 # Run the bot on the server
 echo "Running bot on $REMOTE_SERVER..."
-ssh $REMOTE_SERVER "cd $PROJECT_FOLDER/docker && docker-compose up --build"
+ssh $REMOTE_SERVER "export CONFIG_PATH=../config.json && cd $PROJECT_FOLDER/docker && docker-compose up --build"

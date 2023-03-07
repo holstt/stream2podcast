@@ -41,7 +41,7 @@ async def start_recording(config: Config):
         filepath = record_audio(
             next_recording, config.stream_url, config.output_directory)
 
-        logger.info(f"Recording complete. Duration: {filepath}")
+        logger.info(f"Recording complete: {filepath}")
 
 # Records audio until end time is reached
 
