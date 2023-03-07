@@ -4,7 +4,7 @@
 # This script will upload the relevant files in the project folder to a folder (of the same name) on the remote server
 # 1. Place this script in project root folder and modify the "SET BY USER" variables below. 
 # 2. You may also modify the source_files and exclude_pattern arrays to include/exclude relevant files and folders
-# 3. Run .\deploy.sh
+# 3. Run ./deploy.sh
 # 4. Rsync will perform a dry run first. Please inspect the files that are going to be transferred and press Enter to confirm
 #    The script will then transfer the files to the remote server and run the bot on the server using docker-compose
 # NB: Remember to upload any ignored env/secrets/config files to the server manually
@@ -26,6 +26,8 @@ source_files=(
   # Folders
   "--include=src/"
   "--include=src/**.py"
+  "--include=docker/"
+  "--include=docker/**"
   
   # Files
   "--include=main.py"
