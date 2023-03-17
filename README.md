@@ -10,20 +10,20 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create a podc
 
 ## Setup & Configuration
 
-1. Clone the repository:
+**1. Clone the repository**:
 
 ```
 git clone https://github.com/roedebaron/stream2podcast.git
 cd stream2podcast
 ```
 
-2. Set configuration
+**2. Set configuration**
 
 A JSON config file specifies the URL for the audio stream, the time periods to record (remember time should be in UTC!), and the output directory for the saved recordings.
 
 Note that the time periods cannot overlap as the recording process occurs sequentially.
 
-Modify `./config.example.json` and rename it to `./config.json`:
+Modify `./config.example.json` and rename the file to `./config.json`:
 
 ```json
 {
@@ -49,25 +49,25 @@ Modify `./config.example.json` and rename it to `./config.json`:
 }
 ```
 
-Once the config file is set up, you can either run the program locally or using docker-compose.
+Once the config file is set up, you can either run the program locally or using Docker Compose (see below).
 
-### Local installation
+### Local installation 💻
+df
+\*Requires the [Poetry](https://python-poetry.org/docs/) package manager
 
-\*Requires the Poetry package manager
-
-3. Install dependencies (creates a virtual env):
+**3. Install dependencies:**
 
 ```
 poetry install
 ```
 
-4. Activate the virtual environment
+**4. Create and activate a virtual environment**
 
 ```
 poetry shell
 ```
 
-5. Run
+**5. Run the project**
 
 ```
 python ./main.py
@@ -75,17 +75,17 @@ python ./main.py
 
 -   You can specify a custom path for your configuration file using `./main.py --config path/to/config.json`
 
-### Docker Setup
+### Docker Setup 🐳
 
-\*Requires Docker and docker-compose
+\*Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
-4. From project root, navigate to docker folder
+**4. From project root, navigate to the `./docker` folder**
 
 ```
 cd docker
 ```
 
-5. Run
+**5. Build and run the Docker Compose project**
 
 ```
 docker-compose up --build
