@@ -8,7 +8,7 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create a podc
 -   Configure the program to record at specified time periods throughout the day
 -   Make recordings accessible in a private podcast feed (coming soon)
 
-## Setup & Configuration
+## Getting Started
 
 **1. Clone the repository**:
 
@@ -17,14 +17,9 @@ git clone https://github.com/roedebaron/stream2podcast.git
 cd stream2podcast
 ```
 
-**2. Set configuration**
+**2. Set up configuration**
 
-A JSON config file specifies the URL for the audio stream, the time periods to record (remember time should be in UTC!), and the output directory for the saved recordings.
-
-Note that the time periods cannot overlap as the recording process occurs sequentially.
-
-Modify `./config.example.json` and rename the file to `./config.json`:
-
+`./config.example.json` provides an example of the configuration format: 
 ```json
 {
     "stream_url": "https://example.com",
@@ -48,11 +43,12 @@ Modify `./config.example.json` and rename the file to `./config.json`:
     ]
 }
 ```
+Rename the file to `./config.json` and specify the URL for the audio stream, one or more time periods to record (**NB: time should be in UTC**), and the output directory where recordings should be saved. Note that the start and end time for a recording period is not allowed to overlap with other recording periods as the recording process occurs sequentially.
 
 Once the config file is set up, you can either run the program locally or using Docker Compose (see below).
 
-### Local installation 💻
-df
+## Local Installation 💻
+
 \*Requires the [Poetry](https://python-poetry.org/docs/) package manager
 
 **3. Install dependencies:**
@@ -75,7 +71,7 @@ python ./main.py
 
 -   You can specify a custom path for your configuration file using `./main.py --config path/to/config.json`
 
-### Docker Setup 🐳
+## Docker 🐳
 
 \*Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
