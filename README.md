@@ -4,9 +4,9 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create a podc
 
 ## Features
 
--   Record an audio stream and save it to disk
--   Configure the program to record at specified time periods throughout the day
--   Make recordings accessible in a private podcast feed (coming soon)
+- Record an audio stream and save it to disk
+- Configure the program to record at specified time periods throughout the day
+- Make recordings accessible in a private podcast feed (coming soon)
 
 ## Getting Started
 
@@ -19,30 +19,32 @@ cd stream2podcast
 
 **2. Set up configuration**
 
-`./config.example.json` provides an example of the configuration format: 
+`./config.example.json` provides an example of the configuration format:
+
 ```json
 {
-    "stream_url": "https://example.com",
-    "output_dir": "recordings",
-    "recording_periods": [
-        {
-            "name": "morning program",
-            "start_time_utc": "06:15",
-            "end_time_utc": "07:00"
-        },
-        {
-            "name": "afternoon program",
-            "start_time_utc": "13:05",
-            "end_time_utc": "14:00"
-        },
-        {
-            "name": "evening program",
-            "start_time_utc": "19:30",
-            "end_time_utc": "21:00"
-        }
-    ]
+  "stream_url": "https://example.com",
+  "output_dir": "recordings",
+  "recording_periods": [
+    {
+      "name": "morning program",
+      "start_time_utc": "06:15",
+      "end_time_utc": "07:00"
+    },
+    {
+      "name": "afternoon program",
+      "start_time_utc": "13:05",
+      "end_time_utc": "14:00"
+    },
+    {
+      "name": "evening program",
+      "start_time_utc": "19:30",
+      "end_time_utc": "21:00"
+    }
+  ]
 }
 ```
+
 Rename the file to `./config.json` and specify the URL for the audio stream, one or more time periods to record (**NB: time should be in UTC**), and the output directory where recordings should be saved. Note that the start and end time for a recording period is not allowed to overlap with other recording periods as the recording process occurs sequentially.
 
 Once the config file is set up, you can either run the program locally or using Docker Compose (see below).
@@ -51,13 +53,13 @@ Once the config file is set up, you can either run the program locally or using 
 
 \*Requires the [Poetry](https://python-poetry.org/docs/) package manager
 
-**3. Install dependencies:**
+**3. Install dependencies and create a virtual environment**
 
 ```
 poetry install
 ```
 
-**4. Create and activate a virtual environment**
+**4. Activate the virtual environment**
 
 ```
 poetry shell
@@ -69,7 +71,7 @@ poetry shell
 python ./main.py
 ```
 
--   You can specify a custom path for your configuration file using `./main.py --config path/to/config.json`
+- You can specify a custom path for your configuration file using `./main.py --config path/to/config.json`
 
 ## Docker 🐳
 

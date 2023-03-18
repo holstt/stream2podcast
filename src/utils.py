@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_config(config_path: str) -> Config:
+    logger.info(f"Loading config file from path: {config_path}")
 
     with open(config_path) as json_file:
 
@@ -32,5 +33,7 @@ def load_config(config_path: str) -> Config:
         except json.decoder.JSONDecodeError as e:
             raise ValueError(
                 f"Invalid JSON formatting in config file: {e}") from e
+
+    logger.info("Config loaded successfully")
 
     return Config(stream_url, output_directory, recording_times)

@@ -9,7 +9,7 @@ import time
 
 # Setup logging
 logging.basicConfig(
-    level=logging.NOTSET,
+    level=logging.INFO,
     format='[%(asctime)s] [%(levelname)s] %(name)-25s %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
 )
@@ -25,9 +25,8 @@ args = vars(ap.parse_args())
 async def main():
     config_path = args["config"]
     if not Path(config_path).exists():
-        raise IOError(f"No config file found at {config_path}")
+        raise IOError(f"No config file found at path: {config_path}")
 
-    logging.info(f"Loading config from {config_path}")
     config = load_config(config_path)
 
     # Create output dir
@@ -43,7 +42,7 @@ if __name__ == '__main__':
     except Exception as e:
         logger.exception(f"Unhandled exception occurred: {e}")
         raise e
-    
+
 
 
 
