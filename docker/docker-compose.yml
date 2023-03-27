@@ -1,12 +1,23 @@
 version: "3.8"
 
+name: stream2podcast # Project name avoids parent folder prefix
+
 services:
-  stream2podcast:
-    restart: "always"
+  app:
+    restart: on-failure:5 # Max 5 retries
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    # Mount config file at startup (left path should be local path of your config file)
+    # Mount config file at startup
     volumes:
-      - ${CONFIG_PATH:-../../config.json}:/app/config.json:ro  # Will use CONFIG_PATH if non-empty
-      - ../recordings:/app/recordings # Save recordings to local folder on host
+      # Docker will fail if config file does not exist on host
+      - type: bind 
+        source: ${CONFIG_PATH:-../../config.json} # Will use CONFIG_PATH if non-empty
+        target: /app/config.json
+        read_only: true
+      # Docker will create folder if it does not exist on host
+      - ../recordings:/app/recordings # Save recordings to folder on host (current user on host must have write permissions to this folder if it already exists)
+    user: "${UID}" # Run as current user instead of root (i.e. will have no write permissions in container)
+    environment:
+      - POETRY_VIRTUALENVS_CREATE=false # Set poetry config for docker user. Use system env. in container instead of creating a virtualenv
+      - PYTHONUNBUFFERED=1 # Prevents Python from buffering stdout and stderr

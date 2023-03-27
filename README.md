@@ -4,9 +4,9 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create a podc
 
 ## Features
 
-- Record an audio stream and save it to disk
-- Configure the program to record at specified time periods throughout the day
-- Make recordings accessible in a private podcast feed (coming soon)
+-   Record an audio stream and save it to disk
+-   Configure the program to record at specified time periods throughout the day
+-   Make recordings accessible in a private podcast feed (coming soon)
 
 ## Getting Started
 
@@ -23,25 +23,25 @@ cd stream2podcast
 
 ```json
 {
-  "stream_url": "https://example.com",
-  "output_dir": "recordings",
-  "recording_periods": [
-    {
-      "name": "morning program",
-      "start_time_utc": "06:15",
-      "end_time_utc": "07:00"
-    },
-    {
-      "name": "afternoon program",
-      "start_time_utc": "13:05",
-      "end_time_utc": "14:00"
-    },
-    {
-      "name": "evening program",
-      "start_time_utc": "19:30",
-      "end_time_utc": "21:00"
-    }
-  ]
+    "stream_url": "https://example.com",
+    "output_dir": "recordings",
+    "recording_periods": [
+        {
+            "name": "morning program",
+            "start_time_utc": "06:15",
+            "end_time_utc": "07:00"
+        },
+        {
+            "name": "afternoon program",
+            "start_time_utc": "13:05",
+            "end_time_utc": "14:00"
+        },
+        {
+            "name": "evening program",
+            "start_time_utc": "19:30",
+            "end_time_utc": "21:00"
+        }
+    ]
 }
 ```
 
@@ -71,7 +71,7 @@ poetry shell
 python ./main.py
 ```
 
-- You can specify a custom path for your configuration file using `./main.py --config path/to/config.json`
+-   You can specify a custom path for your configuration file using `./main.py -c path/to/config.json`
 
 ## Docker 🐳
 
@@ -83,11 +83,23 @@ python ./main.py
 cd docker
 ```
 
+Inspect the configuration in `docker-compose.yml`, especially the volumes, and verify that the host paths match your file structure.
+
 **5. Build and run the Docker Compose project**
 
 ```
 docker-compose up --build
 ```
+
+To prevent the container from running as root, you can set the `UID` environment variable to match the current user's ID. The Docker Compose configuration is set up such that it will run the container as this user rather than as root:
+
+Bash:
+`export UID && docker-compose up --build`
+
+Powershell:
+`$env:UID=$(id -u); docker-compose up --build`
+
+NB: Remember this user must have the necessary permissions to access the volumes specified in `docker-compose.yml`.
 
 ## Usage
 
