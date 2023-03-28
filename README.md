@@ -25,27 +25,27 @@ cd stream2podcast
 {
     "stream_url": "https://example.com",
     "output_dir": "recordings",
-    "recording_periods": [
+    "recording_schedules": [
         {
-            "name": "morning program",
-            "start_time_utc": "06:15",
-            "end_time_utc": "07:00"
+            "title": "morning program",
+            "start_timeofday": "06:15",
+            "end_timeofday": "07:00"
         },
         {
-            "name": "afternoon program",
-            "start_time_utc": "13:05",
-            "end_time_utc": "14:00"
+            "title": "afternoon program",
+            "start_timeofday": "13:05",
+            "end_timeofday": "14:00"
         },
         {
-            "name": "evening program",
-            "start_time_utc": "19:30",
-            "end_time_utc": "21:00"
+            "title": "evening program",
+            "start_timeofday": "19:30",
+            "end_timeofday": "21:00"
         }
     ]
 }
 ```
 
-Rename the file to `./config.json` and specify the URL for the audio stream, one or more time periods to record (**NB: time should be in UTC**), and the output directory where recordings should be saved. Note that the start and end time for a recording period is not allowed to overlap with other recording periods as the recording process occurs sequentially.
+Rename the file to `./config.json` and specify the URL for the audio stream, one or more `recording_schedules` defining the start and end times to record (**NB: time should be in UTC**), and the output directory where recordings should be saved. Note that the start and end time for a recording period is not allowed to overlap with other recording periods as the recording process occurs sequentially. If the program starts during a recording period, it will start recording immediatly.
 
 Once the config file is set up, you can either run the program locally or using Docker Compose (see below).
 
@@ -103,6 +103,6 @@ NB: Remember this user must have the necessary permissions to access the volumes
 
 ## Usage
 
-The program automatically starts recording the audio stream each day during the time periods specified in `config.json`. Recordings are saved in the output directory in format `YYYY-MM-DD__HH-MM-SS_name_of_recording.mp3`.
+The program automatically starts recording the audio stream each day during the time periods specified in `config.json`. Recordings are saved in the output directory in format `<date>__<start time>_(<actual start time>)-<end time>_<name of recording>.mp3`.
 
 Enjoy!

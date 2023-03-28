@@ -1,39 +1,33 @@
-from datetime import time
-import json
+import time
 import logging
-
-from src.models import Config, RecordingPeriod
+import argparse
 
 logger = logging.getLogger(__name__)
 
 
-def load_config(config_path: str) -> Config:
-    logger.info(f"Loading config file from path: {config_path}")
+def get_args_config_path():
+    # Load args
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "-c",
+        "--config",
+        required=False,
+        help="Path of json config file",
+        default="config.json",
+    )
+    args = vars(ap.parse_args())
 
-    with open(config_path, "r") as json_file:
-        try:
-            data = json.load(json_file)
-            stream_url = data["stream_url"]
+    # Get config from args
+    config_file_path = args["config"]
 
-            recordings = data["recording_periods"]
-            output_directory = data["output_dir"]
+    return config_file_path
 
-            recording_times: list[RecordingPeriod] = []
 
-            for recording in recordings:
-                # Convert the start time and end time in format HH:MM to datetime
-                start_time = time.fromisoformat(recording["start_time_utc"])
-                end_time = time.fromisoformat(recording["end_time_utc"])
-                recording_time = RecordingPeriod(
-                    recording["name"], start_time, end_time
-                )
-                recording_times.append(recording_time)
-
-        except KeyError as e:
-            raise KeyError(f"Missing key {e} in config file") from e
-        except json.decoder.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON formatting in config file: {e}") from e
-
-    logger.info("Config loaded successfully")
-
-    return Config(stream_url, output_directory, recording_times)
+def setup_logging():
+    # Setup logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] [%(levelname)s] %(name)-25s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    logging.Formatter.converter = time.gmtime  # Use UTC

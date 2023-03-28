@@ -1,84 +1,103 @@
-from datetime import date, datetime, timedelta, time
+from datetime import datetime, timedelta
+import time
 import logging
 import os
-from src.models import Config, RecordingPeriod
+from pathlib import Path
+from typing import NoReturn
+from pydantic import DirectoryPath, HttpUrl
+from src.models import RecordingSchedule, RecordingTask
 import requests
 import asyncio
-from src.models import Config
 import re
 
 logger = logging.getLogger(__name__)
 
 
-async def start_recording(config: Config):
-    # Sort the recording times by start time
-    recording_times_sorted = sorted(
-        config.recording_periods, key=lambda period: period.start_time
-    )
+async def start_recording_loop(
+    stream_url: HttpUrl,
+    recording_schedules: list[RecordingSchedule],
+) -> NoReturn:
 
     while True:
         # Find the next start time
-        now: datetime = datetime.utcnow()
-        # Find first recording with start time after current time of day
-        next_recording = next(
-            (
-                recording
-                for recording in recording_times_sorted
-                if recording.start_time > now.time()
-            ),
-            None,
+        current_time: datetime = datetime.utcnow()
+
+        # Get list of next recording task for each schedule
+        recording_tasks: list[RecordingTask] = produce_next_recording_tasks(
+            recording_schedules, current_time
         )
 
-        if next_recording:
-            # Has recording today, wait until the next start time today
-            wait_duration: timedelta = (
-                datetime.combine(now.date(), next_recording.start_time) - now
-            )
-        else:
-            # No recording today, wait until the next day.
-            # First recording of the day tomorrow must be the first in the list
-            next_recording = recording_times_sorted[0]
-            wait_duration: timedelta = (
-                datetime.combine(
-                    now.date() + timedelta(days=1), next_recording.start_time
-                )
-                - now
-            )
-
-        logger.info(
-            f"Next recording: '{next_recording.name}' from {next_recording.start_time} to {next_recording.end_time}. Waiting {wait_duration} ..."
+        # Get the earliest recording task among all schedules
+        next_recording_task: RecordingTask = min(
+            recording_tasks, key=lambda x: x.start_time
         )
+
+        # Wait until task should be started
+        wait_duration: timedelta = next_recording_task.start_time - current_time
+
+        logger.info(f"Found next recording task: {next_recording_task}")
+        logger.info(f"Waiting {wait_duration}...")
 
         await asyncio.sleep(wait_duration.total_seconds())
 
-        logger.info("Starting recording...")
+        logger.info(f"Recording started for task: {next_recording_task}")
+        # Produce file path
+        output_file_path: Path = get_file_path(current_time, next_recording_task)
 
-        filepath = record_audio(
-            next_recording, config.stream_url, config.output_directory
+        # Start recording
+        record_audio_stream(
+            next_recording_task.duration,
+            output_file_path,
+            stream_url,
         )
 
-        logger.info(f"Recording complete: {filepath}")
+        logger.info(f"Recording complete. Saved at: {output_file_path}")
+
+
+# Produce a recording task from each recording schedule
+def produce_next_recording_tasks(
+    recording_schedules: list[RecordingSchedule], current_time: datetime
+) -> list[RecordingTask]:
+    # Create a recording task for each recording period representing the concrete recording times for next recording
+    recording_tasks: list[RecordingTask] = []
+    recording_tasks = [
+        recording_schedule.get_next_recording_task(current_time)
+        for recording_schedule in recording_schedules
+    ]
+    return recording_tasks
+
+
+def get_file_path(current_time: datetime, task: RecordingTask) -> Path:
+    filename = get_file_name(current_time, task)
+    return task.output_dir / filename
+
+
+def get_file_name(current_time: datetime, task: RecordingTask) -> str:
+    # Replace all non-alphanumeric characters with underscore and lowercase
+    filename = re.sub(r"[^a-zA-Z0-9]", "_", task.title).lower()
+
+    date = current_time.strftime("%Y-%m-%d")
+    start_time = task.start_time.strftime("%H_%M")
+    actual_time = current_time.strftime("%H_%M")
+    end_time = task.end_time.strftime("%H_%M")
+
+    return f"{date}__{start_time}_({actual_time})-{end_time}_{filename}.mp3"
 
 
 # Records one recording period
-def record_audio(
-    recording_period: RecordingPeriod, stream_url: str, output_directory: str
-) -> str:
-    # Replace all non-alphanumeric characters with underscore and lowercase
-    recording_name = re.sub(r"[^a-zA-Z0-9]", "_", recording_period.name).lower()
-    filename = (
-        f"{datetime.utcnow().strftime('%Y-%m-%d__%H-%M-%S')}_{recording_name}.mp3"
-    )
+def record_audio_stream(
+    duration: timedelta, output_file_path: Path, stream_url: HttpUrl
+) -> None:
+    timestamp_start = time.time()
 
-    filepath = os.path.join(output_directory, filename)
     # Send a GET request to the stream URL to initiate the stream
     with requests.get(stream_url, stream=True) as livestream_response:
         # Write to audio file then check if recording time is over
-        with open(filepath, "wb") as f:
+        # wb is write binary
+        with open(output_file_path, "wb") as f:
             for chunk in livestream_response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-                if datetime.utcnow().time() > recording_period.end_time:
+                # check if recording time is over
+                if (time.time() - timestamp_start) > duration.total_seconds():
                     break
-
-    return filepath
