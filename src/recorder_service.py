@@ -9,8 +9,11 @@ from src.models import RecordingSchedule, RecordingTask
 import requests
 import asyncio
 import re
+import http.client
 
 logger = logging.getLogger(__name__)
+
+# http.client.HTTPConnection.debuglevel = 1
 
 
 async def start_recording_loop(
@@ -90,14 +93,32 @@ def record_audio_stream(
 ) -> None:
     timestamp_start = time.time()
 
-    # Send a GET request to the stream URL to initiate the stream
-    with requests.get(stream_url, stream=True) as livestream_response:
-        # Write to audio file then check if recording time is over
-        # wb is write binary
-        with open(output_file_path, "wb") as f:
-            for chunk in livestream_response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                # check if recording time is over
-                if (time.time() - timestamp_start) > duration.total_seconds():
-                    break
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5",
+    }
+
+    try:
+        # Send a GET request to the stream URL to initiate the stream
+        with requests.get(
+            stream_url, stream=True, headers=headers
+        ) as livestream_response:
+            livestream_response.raise_for_status()
+            chunk_size = 32 * 1024  # Read 32KB at a time
+            # Write to audio file then check if recording time is over
+            # wb is write binary
+            with open(output_file_path, "wb") as f:
+                for chunk in livestream_response.iter_content(chunk_size=chunk_size):
+                    if chunk:
+                        f.write(chunk)
+                    # Check if recording time is over
+                    if (time.time() - timestamp_start) > duration.total_seconds():
+                        break
+    except requests.HTTPError as e:
+        raise RecorderException(
+            "Unable to connect to stream. Check your stream URL."
+        ) from e
+
+
+class RecorderException(Exception):
+    pass

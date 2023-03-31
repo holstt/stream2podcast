@@ -24,6 +24,7 @@ class RecordingSchedule:
         title (str): The title of the schedule.
         start_timeofday (time): The start time of day for the recording period in UTC.
         end_timeofday (time): The end time of day for the recording period in UTC.
+        output_dir (DirectoryPath): The output directory for the recording.
     """
 
     title: str
@@ -31,7 +32,7 @@ class RecordingSchedule:
     end_timeofday: time
     output_dir: DirectoryPath
 
-    def __post__init__(
+    def __post_init__(
         self,
     ):
         if not self.title:

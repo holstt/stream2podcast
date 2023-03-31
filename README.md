@@ -4,7 +4,7 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create a podc
 
 ## Features
 
--   Record an audio stream and save it to disk
+-   Record an audio stream and save it to disk (should work with any URL that provides an audio stream in the "audio/mpeg" format)
 -   Configure the program to record at specified time periods throughout the day
 -   Make recordings accessible in a private podcast feed (coming soon)
 
@@ -23,12 +23,12 @@ cd stream2podcast
 
 ```json
 {
-    "stream_url": "https://example.com",
+    "stream_url": "https://example.com", // Should return content-type "audio/mpeg"
     "output_dir": "recordings",
     "recording_schedules": [
         {
             "title": "morning program",
-            "start_timeofday": "06:15",
+            "start_timeofday": "06:15", // Time in HH:MM or HH
             "end_timeofday": "07:00"
         },
         {
