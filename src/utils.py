@@ -5,8 +5,7 @@ import argparse
 logger = logging.getLogger(__name__)
 
 
-def get_args_config_path():
-    # Load args
+def read_config_path():
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "-c",
@@ -23,11 +22,9 @@ def get_args_config_path():
     return config_file_path
 
 
-def setup_logging():
-    # Setup logging
+def setup_logging(level: int = logging.INFO):
     logging.basicConfig(
-        # level=logging.DEBUG,
-        level=logging.INFO,
+        level=level,
         format="[%(asctime)s] [%(levelname)s] %(name)-25s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

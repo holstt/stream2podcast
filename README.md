@@ -4,9 +4,9 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create a podc
 
 ## Features
 
--   Record an audio stream and save it to disk (should work with any URL that provides an audio stream in the "audio/mpeg" format)
+-   Record an audio stream and save it to disk (works with audio streams following either ICY or HLS protocol)
 -   Configure the program to record at specified time periods throughout the day
--   Make recordings accessible in a private podcast feed (coming soon)
+-   (TODO) Make recordings accessible in a private podcast feed
 
 ## Getting Started
 

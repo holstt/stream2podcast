@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import time, datetime, timedelta
-
+import uuid
 from pydantic import DirectoryPath
 
 
@@ -10,6 +10,7 @@ class RecordingTask:
     start_time: datetime
     end_time: datetime
     output_dir: DirectoryPath
+    id: uuid.UUID = uuid.uuid4()
 
     @property
     def duration(self) -> timedelta:
@@ -31,6 +32,8 @@ class RecordingSchedule:
     start_timeofday: time
     end_timeofday: time
     output_dir: DirectoryPath
+    id: uuid.UUID = uuid.uuid4()
+     
 
     def __post_init__(
         self,

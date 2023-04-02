@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# After configuration, this script will be able to upload and deploy the project on a remote server.
+# After configuration, this script can be used to upload and deploy the project on a remote server.
 
 # USAGE:
 # 1. Place this script in the root directory of the project
-# 2. Configure the script by modifying the variables after "USER INPUT" below.
+# 2. Configure the script by modifying the variables in the "SET BY USER" section below.
 # 3. Run ./deploy.sh
-# 4. Rsync will perform a dry run first. Please inspect the files that are going to be transferred and press Enter to confirm
-#    The script will then transfer the files and run the specified command on the remote server.
-# NB: Remember to upload any ignored env/secrets/config files to the server manually
+# 4. Rsync will perform a dry run before uploading the files. Verify the files to be transferred are correct, and press 'Enter' to confirm.
+# The script will then upload the files and run the REMOTE_COMMAND on the remote server.
+# NB: Remember to upload any env/secrets/config files to the server manually if not part of the project.
 
 # Exit script immediatly on any errors
 set -e
@@ -23,8 +23,7 @@ REMOTE_SERVER="vm1"
 # Command that will run the program on the remote server
 REMOTE_COMMAND="export CONFIG_PATH=../config.json UID && cd $PROJECT_DIR_NAME/docker && docker-compose up --build"
 
-# Specify files to sync
-# Modify the source_files and exclude_pattern arrays to include/exclude relevant files and folders.
+# Specify files to sync: Modify the source_files and exclude_pattern arrays to include/exclude the files necessary for deployment
 source_files=(
   # Folders
   "--include=*/"
