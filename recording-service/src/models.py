@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import time, datetime, timedelta
+from pathlib import Path
 import uuid
 from pydantic import DirectoryPath
 
@@ -9,7 +10,7 @@ class RecordingTask:
     title: str
     start_time: datetime
     end_time: datetime
-    output_dir: DirectoryPath
+    output_dir: Path
     id: uuid.UUID = uuid.uuid4()
 
     @property
@@ -25,15 +26,14 @@ class RecordingSchedule:
         title (str): The title of the schedule.
         start_timeofday (time): The start time of day for the recording period in UTC.
         end_timeofday (time): The end time of day for the recording period in UTC.
-        output_dir (DirectoryPath): The output directory for the recording.
+        output_dir (Path): The output directory for the recording.
     """
 
     title: str
     start_timeofday: time
     end_timeofday: time
-    output_dir: DirectoryPath
+    output_dir: Path
     id: uuid.UUID = uuid.uuid4()
-     
 
     def __post_init__(
         self,
@@ -47,8 +47,8 @@ class RecordingSchedule:
                 f"Start time {self.start_timeofday} must be before end time {self.end_timeofday}"
             )
 
-    def get_next_recording_task(self, current_time: datetime) -> RecordingTask:
-        """Get the next recording task for this schedule.
+    def create_next_recording_task(self, current_time: datetime) -> RecordingTask:
+        """Get the next recording task for this schedule considering the current time.
 
         Args:
             current_time (datetime): The current time.

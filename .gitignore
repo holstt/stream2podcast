@@ -2,7 +2,8 @@
 recordings
 config.json
 .vscode
-temp*.py
+temp*
+*.rss
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

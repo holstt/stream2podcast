@@ -21,7 +21,8 @@ PROJECT_DIR_NAME="stream2podcast"
 # Shell alias for the remote server or use username@remote_server_address
 REMOTE_SERVER="vm1"
 # Command that will run the program on the remote server
-REMOTE_COMMAND="export CONFIG_PATH=../config.json UID && cd $PROJECT_DIR_NAME/docker && docker-compose up --build"
+# This command sets the path of configuration and user id for the docker container, then runs the container and follows the log output
+REMOTE_COMMAND="export CONFIG_PATH=../config.json UID && cd $PROJECT_DIR_NAME/docker && docker-compose up -d --build && docker-compose logs -f"
 
 # Specify files to sync: Modify the source_files and exclude_pattern arrays to include/exclude the files necessary for deployment
 source_files=(

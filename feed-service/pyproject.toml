@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "feed-service"
+version = "0.1.0"
+description = "Generates podcast feeds from directories of audio files"
+authors = ["holstt"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+flask = "^2.2.3"
+feedgen = "^0.9.0"
+pydantic = "^1.10.7"
+pyyaml = "^6.0"
+python-slugify = "^8.0.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1.0" 
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+typeCheckingMode = "strict" 
+
+# In strict, but don't show these errors
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
+reportUnusedFunction = "none"
+
+# Not in strict, but show these errors
+reportMissingSuperCall = "error"
+reportCallInDefaultInitializer = "error"
+reportImplicitOverride = "error"
+reportImplicitStringConcatenation = "error"
+reportPropertyTypeMismatch = "error"
+reportShadowedImports = "error"
+reportUninitializedInstanceVariable = "error"
+reportUnnecessaryTypeIgnoreComment = "error" 	
+
+# reportUnusedCallResult = "error"

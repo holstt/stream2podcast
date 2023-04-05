@@ -1,6 +1,6 @@
 {
     "stream_url": "https://example.com",
-    "output_dir": "recordings",
+    "output_dir": "../recordings",
     "recording_schedules": [
         {
             "title": "morning program",
