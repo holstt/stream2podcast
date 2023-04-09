@@ -1,14 +1,18 @@
 # ignore type errors due to no type stubs for feedgen
 # pyright: basic
-from pathlib import Path
+import logging
 import os
 import re
 from datetime import datetime, timezone  # type: ignore
+from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin
+
+import yaml
 from pydantic import HttpUrl
-from src.models import Podcast, PodcastEpisode
-import logging
 from slugify import slugify
+
+from src.models import Podcast, PodcastEpisode
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +90,18 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
 
         episodes.append(episode)
 
-    podcast = Podcast(title=podcast_title, episodes=episodes, url=podcast_url)
+    # Get meta data file # TODO: Validate (see recording-service)
+    meta_file = Path(podcast_directory) / "metadata.yml"
+    with open(meta_file, "r", encoding="utf-8") as f:
+        metadata: dict[str, Any] = yaml.safe_load(f)
+
+    podcast = Podcast(
+        title=podcast_title,
+        episodes=episodes,
+        feed_url=podcast_url,
+        description=metadata.get("description"),
+        image_url=metadata.get("image_url"),
+    )
 
     logger.debug(
         f"Podcast '{podcast.title}' with {len(podcast)} episode(s) loaded from directory: {podcast_directory}"

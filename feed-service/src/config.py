@@ -20,7 +20,7 @@ class AppConfig:
 
 
 # Creates a config object from the YAML file at the given path
-def from_yml(file_path: Path) -> "AppConfig":
+def from_yaml(file_path: Path) -> AppConfig:
     logger.info(f"Loading config from YAML file: {file_path}")
     data = _read_yaml(file_path)
     config = _create_config(data)
@@ -32,7 +32,7 @@ def from_yml(file_path: Path) -> "AppConfig":
 def _read_yaml(file_path: Path) -> dict[str, Any]:
     try:
         with open(file_path, "r") as f:
-            data = yaml.safe_load(f)
+            data: dict[str, Any] | Any = yaml.safe_load(f)
 
     except FileNotFoundError as e:
         raise ConfigError(f"File not found: {file_path}") from e
@@ -41,7 +41,7 @@ def _read_yaml(file_path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ConfigError(f"Invalid YAML file: {file_path}")
 
-    return data  # type: ignore
+    return data
 
 
 # Validates and creates a config object from the given data

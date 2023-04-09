@@ -25,44 +25,42 @@ The project consists of two services: `recording-service` and `feed-service`. Th
 
 ### recording-service
 
-`./recording-service/config.example.json` provides an example of the required configuration format:
+`./recording-service/config.example.yml` provides an example of the required configuration format:
 
-```json
-{
-    "stream_url": "https://example.com",
-    "output_dir": "../recordings",
-    "recording_schedules": [
-        {
-            "title": "morning program",
-            "start_timeofday": "06:15", // Time in HH:MM or HH
-            "end_timeofday": "07:00"
-        },
-        {
-            "title": "afternoon program",
-            "start_timeofday": "13:05",
-            "end_timeofday": "14:00"
-        },
-        {
-            "title": "evening program",
-            "start_timeofday": "19:30",
-            "end_timeofday": "21:00"
-        }
-    ]
-}
+```yaml
+stream_url: "https://example.com"
+output_dir: "../recordings" # Directory where recordings should be saved
+time_zone: "Europe/Berlin" # IANA time zone name. See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+# Time periods to record the stream every day
+recording_schedules:
+    - title: "morning program" # Will be used as the title of the podcast feed
+      start_timeofday: "06:15" # Time as HH:MM (24-hour clock) in the specified time zone
+      end_timeofday: "07:00"
+      description: "This is a morning program" # Optional, will be used as the description of the podcast feed
+      image_url: "https://example.com/image.png" # Optional, will be used as the image of the podcast feed
+
+    - title: "afternoon program"
+      start_timeofday: "13:05"
+      end_timeofday: "14:00"
+
+    - title: "evening program"
+      start_timeofday: "19:30"
+      end_timeofday: "21:00"
 ```
 
-Rename the file to `config.json` and specify the URL for the audio stream, one or more `recording_schedules` defining the start and end times to record (**NB: time should be in UTC**), and the output directory where recordings should be saved. Note that the start and end time for a recording period is not allowed to overlap with other recording periods as the recording process occurs sequentially. If the service is started during a recording period, it will start recording immediatly.
+Rename the file to `config.yml` and adapt the configuration to your use case. Note that the start and end time for a recording schedule should not overlap with other recording schedules as the recording process occurs sequentially (alternatively, the overlapping schedule will start as soon as the other one finishes). If the service is started during a recording schedule, recording will start immediately.
 
 ### feed-service
 
 `./feed-service/config.example.yml` provides an example of the required configuration format:
 
 ```yaml
-base_dir: "../recordings"
-base_url: "https://podcasts.mydomain.com/"
+base_dir: "../recordings" # Directory where feed-service should look for recordings
+base_url: "https://podcasts.mydomain.com/" # Base URL where the podcast feeds should be served from
 ```
 
-Rename the file to `config.yml` and set the base directory to the output directory used by `recording-service` (or any directory, as long as the contained files follows the pattern specified in the **Usage** section).
+Rename the file to `config.yml` and adapt the configuration to your use case. The base directory should be set to the output directory used by `recording-service` (or any directory, as long as the contained files follows the file structure and name pattern specified in the **Usage** section).
 
 Once the configuration files are set up, you can either run the program locally or using Docker Compose (see below).
 
@@ -90,7 +88,7 @@ poetry shell
 python ./main.py
 ```
 
--   You can specify a custom path for your configuration file using `./main.py -c path/to/config.json`
+-   You can specify a custom path for your configuration file using `./main.py -c path/to/config.yml`
 
 ## Docker 🐳
 
@@ -124,7 +122,9 @@ NB: Remember this user must have the necessary permissions to access the volumes
 
 ### recording-service
 
-The `recording-service` automatically starts recording the audio stream following the recording schedules as specified in `./recording-service/config.json`. The file structure of the output directory is as follows:
+The `recording-service` automatically starts recording the audio stream following the recording schedules as specified in `./recording-service/config.yml`. The service creates a new directory for each recording schedule for storing the recordings produced by that schedule together with a metadata file.
+
+The file structure of the output directory is as follows:
 
 ```bash
 <output_dir>/
@@ -132,21 +132,22 @@ The `recording-service` automatically starts recording the audio stream followin
 ├── <recording_schedule_1>/
 │   ├── <recording_1>
 │   ├── <recording_2>
-│   └── ...
+│   ├── ...
+│   └── metadata.yml
 │
 ├── <recording_schedule_2>/
 │   └── ...
 └── ...
 ```
 
-Recordings are saved using a parsable and URL-friendly format:
+The name of a recording file follows the parsable and URL-friendly format:
 
 `<date>--<start_time>-<end_time>--<name_of_recording>--<uuid>.mp3|mp4`
 
 -   `<date>`: Date of recording in the format YYYY-MM-DD
 -   `<start_time>`: Start time (UTC) of recording in the format HHMM (i.e. this can vary from the start time specified in the configuration file, if the service is started during a recording schedule)
 -   `<end_time>`: End time (UTC) of recording in the format HHMM
--   `<name_of_recording>`: A name for the recording. (currently this is the same as the name of the recording schedule/podcast name)
+-   `<name_of_recording>`: Sluggified name of the recording. (currently this is the same as the name of the recording schedule/podcast name)
 -   `<uuid>`: A universally unique identifier (UUID)
 -   `.mp3|mp4`: The file format, either .mp3 or .mp4
 
@@ -163,6 +164,7 @@ The output of `recording-service` enables the `feed-service` to generate the cor
 │   ├── <recording_1>
 │   ├── <recording_2>
 │   ├── ...
+│   ├── metadata.yml
 │   └── feed.xml # <-- added by feed-service
 └── ...
 ```

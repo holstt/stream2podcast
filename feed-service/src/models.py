@@ -1,6 +1,18 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
+
+import validators  # type: ignore
 from pydantic import HttpUrl
+from typing_extensions import override
+
+
+class ValidUrl(str):
+    @override
+    def __new__(cls, value: str):
+        if not validators.url(value):  # type: ignore
+            raise ValueError(f"Invalid url: {value}")
+        return super().__new__(cls, value)
 
 
 @dataclass(frozen=True)
@@ -24,7 +36,11 @@ class PodcastEpisode:
 class Podcast:
     title: str
     episodes: list[PodcastEpisode]
-    url: HttpUrl  # Full url to the podcast feed
+    feed_url: HttpUrl  # Full url to the podcast feed
+
+    # Optional
+    description: Optional[str] = None
+    image_url: Optional[ValidUrl] = None
 
     def __len__(self):
         return len(self.episodes)
