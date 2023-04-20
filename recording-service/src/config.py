@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Optional, Type, TypeVar, Union, overload
 
 import pendulum
 import yaml
@@ -35,7 +35,7 @@ class AppConfig:
 def from_yaml(file_path: Path) -> AppConfig:
     logger.info(f"Loading config from YAML file: {file_path}")
     data = _read_yaml(file_path)
-    config = _create_config(data)
+    config = _parse_data(data)
     logger.info("Config loaded successfully")
     return config
 
@@ -57,31 +57,36 @@ def _read_yaml(file_path: Path) -> dict[str, Any]:
 
 
 # Parses json string into AppConfig object
-def _create_config(data: dict[str, Any]) -> AppConfig:
+def _parse_data(data: dict[str, Any]) -> AppConfig:
     try:
-        schedules = data["recording_schedules"]
-
-        stream_url_value: str = data["stream_url"]
-        base_output_dir_value: str = data["output_dir"]
-        time_zone: str = data["time_zone"]
-        # raise if empty
-        if stream_url_value == "":
-            raise ValueError("Stream URL cannot be empty")
-        if base_output_dir_value == "":
-            raise ValueError("Output directory cannot be empty")
-        if time_zone == "":
-            raise ValueError("Time zone cannot be empty")
-
+        # Parse stream url
+        stream_url_value: str = get_value_or_fail(data, "stream_url")
         stream_url = ValidUrl(stream_url_value)
+        if stream_url.endswith(".m3u8"):
+            audio_format: str = "mp4"
+        else:
+            audio_format: str = "mp3"
+
+        # Parse output directory
+        base_output_dir_value: str = get_value_or_fail(data, "output_dir")
         base_output_dir = Path(base_output_dir_value)
+        # Parse time zone
+        time_zone: str = get_value_or_fail(data, "time_zone")
         user_timezone = pendulum.timezone(time_zone)  # type: ignore
+
+        # Parse recording schedules
+        schedules: list[dict[str, Any]] = get_value_or_fail(
+            data, "recording_schedules", list
+        )
 
         recording_schedules: list[RecordingSchedule] = []
         for schedule in schedules:
-            recording_schedule = _create_schedule(
-                base_output_dir, user_timezone, schedule
+            recording_schedule = _parse_schedule(
+                base_output_dir, user_timezone, schedule, audio_format
             )
             recording_schedules.append(recording_schedule)
+
+        # Everything parsed successfully, return the config object
         return AppConfig(stream_url, base_output_dir, recording_schedules)
     except KeyError as e:
         raise ConfigError(f"Missing key: {e}") from e
@@ -89,36 +94,53 @@ def _create_config(data: dict[str, Any]) -> AppConfig:
         raise ConfigError(f"Invalid value: {e}") from e
 
 
-def _create_schedule(
-    base_output_dir: Path, user_timezone: Timezone, schedule: dict[str, str]
+# Parses a single recording schedule
+def _parse_schedule(
+    base_output_dir: Path,
+    user_timezone: Timezone,
+    schedule_raw: dict[str, str],
+    audio_format: str,
 ) -> RecordingSchedule:
-    title = schedule["title"].title()
+    title = get_value_or_fail(schedule_raw, "title")
     schedule_dir = base_output_dir / slugify(title)
 
-    start_time, duration = get_start_time_and_duration(
-        schedule["start_timeofday"], schedule["end_timeofday"], user_timezone
+    start_time, duration = _parse_start_time_and_duration(
+        get_value_or_fail(schedule_raw, "start_timeofday"),
+        get_value_or_fail(schedule_raw, "end_timeofday"),
+        user_timezone,
     )
 
     # Get optional properties
-    description = schedule.get("description", None)
+    description = schedule_raw.get("description", None)
     image_url = (
-        ValidUrl(schedule["image_url"]) if schedule.get("image_url", None) else None
+        ValidUrl(schedule_raw["image_url"])
+        if schedule_raw.get("image_url", None)
+        else None
     )
+    frequency = schedule_raw.get("frequency", None)
+
+    # Pass only if frequency if has value
+    kwargs = {}
+    if frequency:
+        kwargs["frequency"] = frequency
 
     recording_schedule = RecordingSchedule(
         title,
         start_time,
         duration,
+        audio_format,
         schedule_dir,
-        schedule,
+        schedule_raw,
         description,
         image_url,
+        **kwargs,
     )
 
     return recording_schedule
 
 
-def get_start_time_and_duration(
+# Gets the start time (UTC) and duration from the raw start and end times
+def _parse_start_time_and_duration(
     start_time_local_val: str, end_time_local_val: str, user_timezone: Timezone
 ) -> tuple[Time, Duration]:
     # Convert the start time and end time in format HH:MM to datetime
@@ -129,19 +151,46 @@ def get_start_time_and_duration(
     if not isinstance(start_time_local, Time) or not isinstance(end_time_local, Time):
         raise ConfigError(f"Invalid time format for start_time or end_time")
 
-    # Calculate duration before converting to UTC
-    if start_time_local < end_time_local:
-        # Regular case
-        duration = end_time_local.diff(start_time_local)
-    else:
-        # Crossing midnight, end time should be the time next day
-        date = utils.get_utc_now()  # Create a random date
-        # For this date, replace the time with the start and end time, but add a day to the end time, then calc duration
-        start_dt = utils.replace_time_in_datetime(date, start_time_local)
-        end_dt = utils.replace_time_in_datetime(date, end_time_local).add(days=1)
-        duration = start_dt.diff(end_dt).as_interval()
+    # Calculate duration in local time (to ensure possible midnight rollover is handled correctly)
+    duration = utils.get_duration_btw_times(start_time_local, end_time_local)
 
-    start_time = utils.convert_time_to_utc(
+    # Now we can convert the start time to UTC
+    start_time_utc = utils.convert_time_to_utc(
         start_time_local, from_time_zone=user_timezone
     )
-    return start_time, duration
+    return start_time_utc, duration
+
+
+T = TypeVar("T")
+
+
+# XXX: Make a dict wrapper/extension?
+# Case no type specified (assume str)
+@overload
+def get_value_or_fail(d: Dict[str, Any], key: str) -> str:
+    ...
+
+
+# Case type specified
+@overload
+def get_value_or_fail(d: Dict[str, Any], key: str, required_type: Type[T]) -> T:
+    ...
+
+
+# Gets the value of key, and fails if not present (None or empty) or not expected type
+def get_value_or_fail(
+    d: dict[str, Any], key: str, required_type: type[T] = str
+) -> Union[T, str]:
+    if key not in d:
+        raise KeyError(f"Key '{key}' not found in the dictionary")
+
+    value = d[key]
+    if value is None or len(value) == 0:
+        raise ValueError(f"Value for key '{key}' is None or empty")
+
+    if not isinstance(value, required_type):
+        raise TypeError(
+            f"Value for key '{key}' is not of the required type '{required_type.__name__}'"
+        )
+
+    return value

@@ -4,11 +4,11 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create podcas
 
 ## Features
 
--   Record an audio stream and save it to disk (works with audio streams following either ICY or HLS protocol)
--   Create multiple recording schedules to record at specific time intervals throughout the day
--   Generate podcast feed (XML-files) from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
+-   Record a HTTP audio stream and save it to disk (works with audio streams following either ICY or HLS protocol)
+-   Create multiple recording schedules to record at different time periods throughout the day (using [APScheduler - Advanced Python Scheduler](https://github.com/agronholm/apscheduler))
+-   Generate a podcast feed (XML-file) from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
+-   Publish as podcast: The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (XML feed + recordings) from the root of the output directory.
 -   Docker support: Easy deployment using Docker Compose
--   Publish as podcast: The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files from the root of the output directory.
 
 ## Getting Started
 
@@ -34,22 +34,28 @@ time_zone: "Europe/Berlin" # IANA time zone name. See https://en.wikipedia.org/w
 
 # Time periods to record the stream every day
 recording_schedules:
-    - title: "morning program" # Will be used as the title of the podcast feed
+    - title: "morning program every weekday" # Will be used as the title of the podcast feed
       start_timeofday: "06:15" # Time as HH:MM (24-hour clock) in the specified time zone
       end_timeofday: "07:00"
-      description: "This is a morning program" # Optional, will be used as the description of the podcast feed
-      image_url: "https://example.com/image.png" # Optional, will be used as the image of the podcast feed
 
-    - title: "afternoon program"
+      frequency: "mon, tue, wed, thu, fri" # Optional, defaults to '*'
+      description: "This is a morning program" # Optional, will be used as the podcast description when generating the feed
+      image_url: "https://example.com/image.png" # Optional, will be used as the podcast image when generating the feed
+
+    - title: "afternoon program every weekday"
       start_timeofday: "13:05"
       end_timeofday: "14:00"
+      frequency: "mon-fri" # Optional
 
-    - title: "evening program"
+    - title: "evening program on tuesdays and fridays"
       start_timeofday: "19:30"
       end_timeofday: "21:00"
+      frequency: "tue, fri" # Optional
 ```
 
-Rename the file to `config.yml` and adapt the configuration to your use case. Note that the start and end time for a recording schedule should not overlap with other recording schedules as the recording process occurs sequentially (alternatively, the overlapping schedule will start as soon as the other one finishes). If the service is started during a recording schedule, recording will start immediately.
+Rename the file to `config.yml` and adapt the configuration to your use case. Recording schedules are allowed to overlap, as the service supports parallel recording. If the service is started during a recording schedule, recording will start immediately.
+
+`frequency` is a **day-of-week** cron expression which also supports abbreviated names (e.g. `"mon, tue, wed, thu, fri"` or `"mon-fri"`).
 
 ### feed-service
 

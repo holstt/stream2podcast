@@ -37,18 +37,9 @@ def setup_logging(level: int = logging.INFO):
     logging.Formatter.converter = time.gmtime  # Use UTC
 
 
-# Central time management
-
-# def to_local_time(dt: datetime, local_time_zone_key: str) -> datetime:
-#     return dt.astimezone(ZoneInfo(local_time_zone_key))
-
-
-# def to_utc(dt: datetime) -> datetime:
-#     return dt.astimezone(timezone.utc)
-
-# Replaces time component while keeping the date and timezone
-# NB: Do not use DateTime.combine from pendulum as it will ignore the timezone...
+# Replaces time component while keeping the date AND timezone
 def replace_time_in_datetime(dt: DateTime, time: Time) -> DateTime:
+    # NB: We do not use DateTime.combine from pendulum as it will ignore the timezone...
     return pendulum.instance(datetime.combine(dt.date(), time), tz=dt.timezone)
 
 
@@ -61,12 +52,56 @@ def convert_time_to_utc(time: Time, from_time_zone: Timezone) -> Time:
     )
 
 
+def get_duration_btw_times(start_time_local: Time, end_time_local: Time) -> Duration:
+    if start_time_local < end_time_local:
+        # Regular case, start and end time are on the same day
+        duration = end_time_local.diff(start_time_local)
+    else:
+        # Crossing midnight case, end time should be the time next day
+        date = get_utc_now()  # Create a random date
+        # For this date, replace the time with the start and end time, but add a day to the end time, then calc duration
+        start_dt = replace_time_in_datetime(dt=date, time=start_time_local)
+        end_dt = replace_time_in_datetime(dt=date, time=end_time_local).add(days=1)
+        duration = start_dt.diff(end_dt).as_interval()
+    return duration
+
+
 # ALWAYS use this to get current time.
 def get_utc_now() -> DateTime:
-    return pendulum.now("UTC")
+    return pendulum.now(timezone("UTC"))
 
 
+# A specific time period with a start and end datetime
 class TimePeriod(Period):
+    @property
+    def start(self) -> DateTime:
+        return self._start  # type: ignore
+
+    @property
+    def end(self) -> DateTime:
+        return self._end  # type: ignore
+
+    # Overwrite to ensure DateTime is used
+    def __init__(self, start: DateTime, end: DateTime, absolute: bool = False) -> None:
+        super().__init__(start, end, absolute)
+
+    def __new__(cls, start: DateTime, end: DateTime, absolute: bool = False):
+        return super().__new__(cls, start, end, absolute)
+
+    # Checks whether the period is currently active
+    def is_active(self, current_time: DateTime) -> bool:
+        return self.start <= current_time and current_time < self.end
+
+    # Duration property
+    @property
+    def duration(self) -> Duration:
+        return self.as_interval()
+
+    # def change_start(self, new_start: DateTime) -> None:
+    #     # Ensure new start is before end
+    #     if new_start < self.end:
+    #         raise ValueError("New start must be before end")
+    #     self._start = new_start
 
     # Time until the start of the period
     def get_time_until_start(self, current_time: DateTime) -> Duration:
@@ -77,10 +112,13 @@ class TimePeriod(Period):
 
     # Time until the end of the period
     def get_time_remaining(self, current_time: DateTime) -> Duration:
+        # If not started yet, return duration
         if current_time < self.start:
             return self.as_interval()
+        # If already expired, return 0
         elif current_time >= self.end:
             return Duration(seconds=0)
+        # If in progress, return time remaining
         else:
             return self.end.diff(current_time).as_interval()
 
@@ -91,23 +129,32 @@ class TimeProvider:
 
 
 class CountdownTimer:
-    def __init__(self, end_time: DateTime | Date, time_provider: TimeProvider) -> None:
+    def __init__(self, duration: Duration, time_provider: TimeProvider) -> None:
         super().__init__()
-        self._end_time = end_time
+        self.duration = duration
         self._time_provider = time_provider
-        self._time_period = None
+        self._start_time: DateTime | None = None
 
     def start(self) -> None:
-        self._time_period = TimePeriod(
-            self._time_provider.get_current_time(), self._end_time
-        )
+        if self._start_time is not None:
+            raise RuntimeError("Timer has already been started")
+        self._start_time = self._time_provider.get_current_time()
 
     def get_time_remaining(self) -> Duration:
-        if self._time_period is None:
-            raise ValueError("Timer has not been started")
-        return self._time_period.get_time_remaining(
-            self._time_provider.get_current_time()
+        if self._start_time is None:
+            raise RuntimeError("Timer has not been started")
+
+        # How long time since start
+        time_elapsed = (
+            self._time_provider.get_current_time().diff(self._start_time).as_interval()
         )
+        time_left = self.duration - time_elapsed
+
+        # If expired, return 0
+        if time_left < Duration(seconds=0):
+            return Duration(seconds=0)
+
+        return time_left
 
     # Whether the timer has expired
     def is_expired(self) -> bool:

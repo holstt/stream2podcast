@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -26,14 +26,16 @@ class HttpStreamClient:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0",
         }
-        # XXX: init client in ctor and use between requests?
         self.chunk_size = chunk_size
 
     # Yields a chunk of bytes from a HTTP stream
-    async def get_stream(self, url: ValidUrl) -> AsyncIterator[bytes]:
-
+    async def get_stream(
+        self,
+        url: ValidUrl,
+        stream_name: Optional[str] = None,  # Optional. Used for better logging output
+    ) -> AsyncIterator[bytes]:
         try:
-            logger.debug(f"Fetching stream: {url}")
+            logger.debug(f"{format_stream_name(stream_name)}Fetching stream for: {url}")
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, headers=self.headers) as response:
@@ -55,7 +57,10 @@ class AudioStreamAdapter(ABC):
     @abstractmethod
     # Yields a chunk of bytes from a stream
     async def get_audio_data(
-        self, url: ValidUrl, countdown: utils.CountdownTimer
+        self,
+        url: ValidUrl,
+        countdown: utils.CountdownTimer,
+        stream_name: Optional[str] = None,
     ) -> AsyncIterator[bytes]:
         raise NotImplementedError
         yield
@@ -71,12 +76,16 @@ class HttpAudioStreamAdapter(AudioStreamAdapter):
 
     # Yields a chunk of bytes from a HTTP stream
     async def get_audio_data(
-        self, url: ValidUrl, countdown: utils.CountdownTimer
+        self,
+        url: ValidUrl,
+        countdown: utils.CountdownTimer,
+        stream_name: Optional[str] = None,
     ) -> AsyncIterator[bytes]:
-
         countdown.start()
+
+        # Keep fetching data from the stream until the countdown expires
         while not countdown.is_expired():
-            async for chunk in self.http_stream_client.get_stream(url):
+            async for chunk in self.http_stream_client.get_stream(url, stream_name):
                 yield chunk
 
 
@@ -90,7 +99,10 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
 
     # Yields a chunk of bytes from a HLS stream
     async def get_audio_data(
-        self, url: ValidUrl, countdown: utils.CountdownTimer
+        self,
+        url: ValidUrl,
+        countdown: utils.CountdownTimer,
+        stream_name: Optional[str] = None,
     ) -> AsyncIterator[bytes]:
         WAIT_TIME_SEC = 5  # Time to wait until checking for new segments
         recorded_segments: list[str] = []
@@ -109,7 +121,7 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
 
             for segment in new_segments:
                 async for chunk in self.http_stream_client.get_stream(
-                    self._to_url(url, segment)
+                    self._to_url(url, segment), stream_name
                 ):
                     yield chunk
 
@@ -118,7 +130,7 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
 
             # Wait before fetching new segments
             logger.debug(
-                f"Waiting {WAIT_TIME_SEC} seconds before fetching new segments"
+                f"{format_stream_name(stream_name)}Waiting {WAIT_TIME_SEC} seconds before fetching new segments"
             )
             await asyncio.sleep(WAIT_TIME_SEC)
 
@@ -126,8 +138,6 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
     def _get_new_segments(
         self, playlist_url: ValidUrl, old_segments: list[str]
     ) -> list[str]:
-        # XXX: Should account for duration? E.g. if many new segments, it may exceed the countdown time
-
         try:
             # Reload playlist
             playlist = m3u8.load(playlist_url)
@@ -144,3 +154,10 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
 
     def _to_url(self, base_url: ValidUrl, segment_file: str) -> ValidUrl:
         return ValidUrl(urljoin(base_url, segment_file))
+
+
+def format_stream_name(stream_name: Optional[str]) -> str:
+    if not stream_name:
+        return ""
+
+    return "Stream " + "'" + str(stream_name) + "': "

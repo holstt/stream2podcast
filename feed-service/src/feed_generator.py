@@ -3,10 +3,10 @@
 import logging
 
 from feedgen import feed
-
 from src.models import Podcast
 
 logger = logging.getLogger(__name__)
+
 
 # Generate a XML podcast feed for a podcast
 def generate(podcast: Podcast) -> bytes:
