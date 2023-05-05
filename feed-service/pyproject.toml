@@ -15,6 +15,7 @@ tzdata = "^2023.3"
 pendulum = "^2.1.2"
 validators = "^0.20.0"
 apscheduler = "^3.10.1"
+watchdog = "^3.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0" 

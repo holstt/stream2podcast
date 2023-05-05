@@ -55,6 +55,7 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
     # Pattern example: 2023-04-03--1200-1400--episode-title--ee1ad7c6-95bf-4116-a1f8-060053e80a73.mp3
     episode_file_pattern = r"^(?P<date>\d{4}-\d{2}-\d{2})--(?P<start_time>\d{4})-(?P<end_time>\d{4})--(?P<title>.*?)--(?P<uuid>[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(?P<file_ext>mp3|mp4)$"
 
+    # Load episode data from file names in podcast directory
     episodes: list[PodcastEpisode] = []
     for file in iter_episode_files(podcast_directory):
         # Apply regex pattern to file name

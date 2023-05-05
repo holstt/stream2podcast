@@ -3,6 +3,7 @@
 import logging
 
 from feedgen import feed
+
 from src.models import Podcast
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,9 @@ def generate(podcast: Podcast) -> bytes:
     # fg.subtitle("Feed subtitle")  # TODO: From config
 
     # Set optional fields
-    fg.description(podcast.description) if podcast.description else None
+    fg.description(podcast.description) if podcast.description else fg.description(
+        podcast.title  # Must have description, so if none provided, use title
+    )
     fg.image(podcast.image_url) if podcast.image_url else None
 
     # fg.id(podcast.url)

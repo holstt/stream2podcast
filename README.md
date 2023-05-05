@@ -15,7 +15,7 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create podcas
 **1. Clone the repository**:
 
 ```
-git clone https://github.com/roedebaron/stream2podcast.git
+git clone https://github.com/holstt/stream2podcast.git
 cd stream2podcast
 ```
 
