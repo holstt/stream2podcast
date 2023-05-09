@@ -105,31 +105,7 @@ python ./main.py
 
 ## Docker 🐳
 
-\*Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-
-**3. From project root, navigate to the `./docker` folder**
-
-```
-cd docker
-```
-
-Inspect the configuration in `docker-compose.yml`, especially the volumes, and verify that the host paths match your file structure.
-
-**4. Build and run the Docker Compose project**
-
-```
-docker-compose up --build
-```
-
-To prevent the container from running as root, you can set the `UID` environment variable to match the current user's ID. The Docker Compose configuration is set up such that it will run the container as this user rather than as root:
-
-Bash:
-`export UID && docker-compose up --build`
-
-Powershell:
-`$env:UID=$(id -u); docker-compose up --build`
-
-NB: Remember this user must have the necessary permissions to access the volumes specified in `docker-compose.yml`.
+_...coming soon_
 
 ## Output
 

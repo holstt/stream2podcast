@@ -1,23 +1,23 @@
 version: "3.8"
 
+# This compose config should not be run directly.
+# Instead, use 'docker_run.py' with a 'docker.<env>.ini' file to ensure host is configured correctly.
+
 name: stream2podcast # Project name avoids parent folder prefix
 
 services:
   recorder:
     restart: on-failure:5 # Max 5 retries
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    # Mount config file at startup
+      context: ../recording-service
+      dockerfile: ../docker/Dockerfile
+    # These volumes are expected to exist on host and accessible by the container user
     volumes:
-      # Docker will fail if config file does not exist on host
-      - type: bind 
-        source: ${CONFIG_PATH:-../recording-service/config.json} # Will use CONFIG_PATH variable if it is non-empty
-        target: /app/config.json
-        read_only: true
-      # Docker will create folder if it does not exist on host
-      - ../recordings:/app/recordings # Save recordings to folder on host (current user on host must have write permissions to this folder if it already exists)
-    user: "${UID}" # Run as current user instead of root (i.e. will have no write permissions in container)
+      - ${RECORDER_CONFIG_PATH}:/app/config.json:ro
+      - ${RECORDER_OUTPUT_DIR}:/app/recordings
+    
+    # Run as this (unprivileged) user instead of root. If not set, will run as root.
+    user: "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" 
     environment:
       - POETRY_VIRTUALENVS_CREATE=false # Set poetry config for docker user. Use system env. in container instead of creating a virtualenv
       - PYTHONUNBUFFERED=1 # Prevents Python from buffering stdout and stder
