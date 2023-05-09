@@ -1,10 +1,11 @@
+import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from pydantic import DirectoryPath, HttpUrl
+
 import yaml
-import logging
-import os
+from pydantic import DirectoryPath, HttpUrl
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,6 @@ def _read_yaml(file_path: Path) -> dict[str, Any]:
 
 # Validates and creates a config object from the given data
 def _create_config(data: dict[str, Any]) -> AppConfig:
-
     try:
         base_dir = Path(data["base_directory"])
 

@@ -12,13 +12,9 @@ import yaml
 from pydantic import HttpUrl
 from slugify import slugify
 
-from src.models import Podcast, PodcastEpisode
+from src.models import Podcast, PodcastEpisode, ValidUrl
 
 logger = logging.getLogger(__name__)
-
-
-def to_title(title: str):
-    return slugify(title, separator=" ").title()
 
 
 class PodcastLoadError(Exception):
@@ -26,13 +22,7 @@ class PodcastLoadError(Exception):
 
 
 # Valid file extensions for episode files
-VALID_AUDIO_FILE_ENDINGS = (".mp3", ".mp4")
-
-
-def iter_episode_files(podcast_directory: Path):
-    for f in os.scandir(podcast_directory):
-        if f.is_file() and f.name.endswith(VALID_AUDIO_FILE_ENDINGS):
-            yield f
+VALID_AUDIO_FILE_EXT = (".mp3", ".mp4")
 
 
 # Loads podcast from a given directory
@@ -42,14 +32,13 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
     if not os.path.isdir(podcast_directory):
         raise PodcastLoadError(f"Directory does not exist: {podcast_directory}")
 
-    # Podcast title is the directory name
-    podcast_title = to_title(podcast_directory.name)
+    # Podcast directory assumed to have the name of the podcast.
+    podcast_title = _to_title(podcast_directory.name)
 
     # Generate url from podcast title
-    podcast_url = HttpUrl(
+    podcast_url = ValidUrl(
         # Add / for directory
         urljoin(base_url, (slugify(podcast_title) + "/")),
-        scheme="https",
     )
 
     # Pattern example: 2023-04-03--1200-1400--episode-title--ee1ad7c6-95bf-4116-a1f8-060053e80a73.mp3
@@ -57,7 +46,7 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
 
     # Load episode data from file names in podcast directory
     episodes: list[PodcastEpisode] = []
-    for file in iter_episode_files(podcast_directory):
+    for file in _iter_episode_files(podcast_directory):
         # Apply regex pattern to file name
         match = re.match(episode_file_pattern, file.name)
 
@@ -73,9 +62,8 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
 
         date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
-        episode_media_url = HttpUrl(
+        episode_media_url = ValidUrl(
             urljoin(podcast_url, file.name),
-            scheme="https",
         )
 
         # Get size of file in bytes
@@ -92,7 +80,7 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
         episodes.append(episode)
 
     # Get meta data file # TODO: Validate (see recording-service)
-    meta_file = Path(podcast_directory) / "metadata.yml"
+    meta_file = Path(podcast_directory / "metadata.yml")
     with open(meta_file, "r", encoding="utf-8") as f:
         metadata: dict[str, Any] = yaml.safe_load(f)
 
@@ -109,3 +97,13 @@ def load_podcast(podcast_directory: Path, base_url: HttpUrl) -> Podcast:
     )
 
     return podcast
+
+
+def _to_title(title: str):
+    return slugify(title, separator=" ").title()
+
+
+def _iter_episode_files(podcast_directory: Path):
+    for dir_entry in os.scandir(podcast_directory):
+        if dir_entry.is_file() and dir_entry.name.endswith(VALID_AUDIO_FILE_EXT):
+            yield dir_entry

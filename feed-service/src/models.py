@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 import validators  # type: ignore
-from pydantic import HttpUrl
 from typing_extensions import override
 
 
@@ -19,7 +18,7 @@ class ValidUrl(str):
 class PodcastEpisode:
     date: datetime
     title: str
-    media_url: HttpUrl  # Full url to the episode file
+    media_url: ValidUrl  # Full url to the episode file
     file_size_bytes: int  # Size of the episode file in bytes
     uuid: str  # Unique id for the episode
 
@@ -36,7 +35,7 @@ class PodcastEpisode:
 class Podcast:
     title: str
     episodes: list[PodcastEpisode]
-    feed_url: HttpUrl  # Full url to the podcast feed
+    feed_url: ValidUrl  # Full url to the podcast feed
 
     # Optional
     description: Optional[str] = None

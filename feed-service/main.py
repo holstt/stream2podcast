@@ -1,79 +1,49 @@
 import asyncio
 import logging
-import time
+from datetime import timedelta
 from pathlib import Path
-from turtle import update
-from typing import Any, Callable
-
-from typing_extensions import override
-from watchdog.events import FileSystemEvent, FileSystemEventHandler
-from watchdog.observers import Observer
 
 import src.feed_usecase as feed_usecase
 from src import config, utils
 from src.config import AppConfig
+from src.monitor_service import FileChangedEventHandler, FileMonitorService
 
 logger = logging.getLogger(__name__)
 
 
-class FileChangedEventHandler(FileSystemEventHandler):
-    # Callable takes the path of the file that triggered the event
-    def __init__(self, callback: Callable[[Path], None]) -> None:
-        super().__init__()
-        self.callback = callback
-        # XXX: Ignore multiple events for the same file within the debounce time
-        # self.debounce_seconds = 5
-        self.pending_events: dict[float, str] = {}
-
-    # Triggers on any kind of file change
-    def on_any_event(self, event: FileSystemEvent) -> None:
-        if event.is_directory:
-            return
-
-        logger.info(f"{event.event_type} - {event.src_path}")
-        self.callback(Path(event.src_path))
-
-
-# XXX: Updates all feeds on any file change atm.
-def update_feeds(file_path: Path):
-    # Ignore updates to rss feed files to avoid infinite loop
-    if file_path.name == feed_usecase.FEED_FILE_NAME:
+def update_feed(feed_file_changed: Path):
+    # Ignore any changes to the .rss feed files themselves
+    if feed_file_changed.name == feed_usecase.FEED_FILE_NAME:
         return
 
-    logger.info(f"A file changed: {file_path}, updating all feeds")
-    feed_usecase.write_podcast_feeds(
-        app_config.base_dir,
+    # Get name of podcast directory
+    podcast_dir = feed_file_changed.parent
+
+    feed_usecase.update_podcast_feed(
+        podcast_dir,
         app_config.base_url,
     )
-    logger.info("Finished updating all feeds")
 
 
 async def main(app_config: AppConfig):
-    event_handler = FileChangedEventHandler(update_feeds)
-    observer = Observer()
-    logger.info(f"Monitoring directory for file changes: {app_config.base_dir}")
-    observer.schedule(event_handler, path=app_config.base_dir, recursive=True)
-
-    # Start monitoring
-    observer.start()
-
-    try:
-        loop = asyncio.get_event_loop()
-        while True:
-            await asyncio.sleep(0)
-
-    finally:
-        observer.stop()
-        observer.join()
+    # On a file change in the feed storage, require 5 minutes without further change to the file before triggering the callback that updates the corresponding podcast feed. This ensures that the podcast feed is not updated before a recording is finished.
+    debounce_time = timedelta(minutes=5)
+    event_handler = FileChangedEventHandler(
+        debounce_time, callback=lambda file_path: update_feed(file_path)
+    )
+    directory_monitor = FileMonitorService(app_config.base_dir, event_handler)
+    await directory_monitor.start()
 
 
 if __name__ == "__main__":
     # utils.setup_logging()
-    utils.setup_logging(logging.DEBUG)
+    utils.setup_logging(logging.INFO)
     try:
         config_file_path = utils.read_config_path()
         app_config = config.from_yaml(config_file_path)
         asyncio.run(main(app_config))
+    except KeyboardInterrupt:
+        pass
     except Exception as e:
         logger.exception(f"Unhandled exception occurred: {e}")
         raise e

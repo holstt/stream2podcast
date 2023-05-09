@@ -6,8 +6,8 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create podcas
 
 -   Record a HTTP audio stream and save it to disk (works with audio streams following either ICY or HLS protocol)
 -   Create multiple recording schedules to record at different time periods throughout the day (using [APScheduler - Advanced Python Scheduler](https://github.com/agronholm/apscheduler))
--   Generate a podcast feed (XML-file) from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
--   Publish as podcast: The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (XML feed + recordings) from the root of the output directory.
+-   Generate a podcast RSS feed from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
+-   Publish as podcast: The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (RSS feed file + recordings) from the root of the output directory.
 -   Docker support: Easy deployment using Docker Compose
 
 ## Getting Started
@@ -21,7 +21,7 @@ cd stream2podcast
 
 **2. Set up configuration**
 
-The project consists of two services: `recording-service` and `feed-service`. The `recording-service` is responsible for recording the audio streams and storing them on disk, while the `feed-service` is responsible for generating podcast feeds based on these recordings. The two services run separately and are fully independent of each other. `feed-service` is simply monitoring the output directory of the `recording-service` for any changes, and will update the podcast feeds whenever a new recording is added.
+The project consists of two services: `recording-service` and `feed-service`. The `recording-service` is responsible for recording the audio streams and storing them on disk, while the `feed-service` is responsible for generating podcast RSS feeds based on these recordings. The two services run separately and are fully independent of each other. `feed-service` is simply monitoring the output directory of the `recording-service` for any changes, and will update the podcast RSS feed whenever a new recording is added for that particular podcast.
 
 ### recording-service
 
@@ -32,13 +32,13 @@ stream_url: "https://example.com"
 output_dir: "../recordings" # Directory where recordings should be saved
 time_zone: "Europe/Berlin" # IANA time zone name. See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-# Time periods to record the stream every day
+# Specify one or more recording schedules
 recording_schedules:
     - title: "morning program every weekday" # Will be used as the title of the podcast feed
       start_timeofday: "06:15" # Time as HH:MM (24-hour clock) in the specified time zone
       end_timeofday: "07:00"
 
-      frequency: "mon, tue, wed, thu, fri" # Optional, defaults to '*'
+      frequency: "mon, tue, wed, thu, fri" # Optional, defaults to '*' i.e. every day
       description: "This is a morning program" # Optional, will be used as the podcast description when generating the feed
       image_url: "https://example.com/image.png" # Optional, will be used as the podcast image when generating the feed
 
@@ -62,11 +62,18 @@ Rename the file to `config.yml` and adapt the configuration to your use case. Re
 `./feed-service/config.example.yml` provides an example of the required configuration format:
 
 ```yaml
-base_dir: "../recordings" # Directory where feed-service should look for recordings
-base_url: "https://podcasts.mydomain.com/" # Base URL where the podcast feeds should be served from
+# Directory where feed-service should look for recordings.
+base_dir: "../recordings"
+
+# Base URL where the podcast feeds are served from
+base_url: "https://podcasts.mydomain.com/"
 ```
 
-Rename the file to `config.yml` and adapt the configuration to your use case. The base directory should be set to the output directory used by `recording-service` (or any directory, as long as the contained files follows the file structure and name pattern specified in the **Usage** section).
+Rename the file to `config.yml` and adapt the configuration to your use case.
+
+`base_dir` should be set to the output directory used by `recording-service` (or any directory, as long as the contained files follows the file structure and name pattern specified in the **Usage** section). This directory will be monitored for changes, and the podcast feeds will be updated accordingly. A feed update is only triggered if a file change is registered and then no other changes occur for that file the next 5 minutes. This ensures that a feed update is not triggered while a recording is still in progress.
+
+`base_url` is used to generate the episode URLs in the podcast feed, which will be in the format `https://<base_url>/<podcast_title>/<episode_filename>`.
 
 Once the configuration files are set up, you can either run the program locally or using Docker Compose (see below).
 
@@ -161,7 +168,7 @@ Example: `2023-04-03--1230-1400--recording-name--ee1ad7c6-95bf-4116-a1f8-060053e
 
 ### feed-service
 
-The output of `recording-service` enables the `feed-service` to generate the corresponding podcast feeds. `feed-service` generates a podcast feed for each recording schedule, and each recording is represented as an episode in that feed. The resulting `feed.xml` file is saved in the same directory as the recordings. As such, the file structure of the output directory ends up looking like this:
+The output of `recording-service` enables the `feed-service` to generate the corresponding podcast feeds. `feed-service` generates a podcast feed for each recording schedule, and each recording is represented as an episode in that feed. The resulting `feed.rss` file is saved in the same directory as the recordings. As such, the file structure of the output directory ends up looking like this:
 
 ```bash
 <output_dir>/
@@ -171,6 +178,6 @@ The output of `recording-service` enables the `feed-service` to generate the cor
 │   ├── <recording_2>
 │   ├── ...
 │   ├── metadata.yml
-│   └── feed.xml # <-- added by feed-service
+│   └── feed.rss # <-- added by feed-service
 └── ...
 ```

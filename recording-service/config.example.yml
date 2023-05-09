@@ -2,13 +2,13 @@ stream_url: "https://example.com"
 output_dir: "../recordings" # Directory where recordings should be saved
 time_zone: "Europe/Berlin" # IANA time zone name. See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-# Time periods to record the stream every day
+# Specify one or more recording schedules
 recording_schedules:
     - title: "morning program every weekday" # Will be used as the title of the podcast feed
       start_timeofday: "06:15" # Time as HH:MM (24-hour clock) in the specified time zone
       end_timeofday: "07:00"
 
-      frequency: "mon, tue, wed, thu, fri" # Optional, defaults to '*'
+      frequency: "mon, tue, wed, thu, fri" # Optional, defaults to '*' i.e. every day
       description: "This is a morning program" # Optional, will be used as the podcast description when generating the feed
       image_url: "https://example.com/image.png" # Optional, will be used as the podcast image when generating the feed
 
