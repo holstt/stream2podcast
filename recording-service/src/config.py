@@ -20,6 +20,14 @@ class ConfigError(Exception):
     pass
 
 
+class LoadConfigFileError(ConfigError):
+    pass
+
+
+class ParseConfigError(ConfigError):
+    pass
+
+
 @dataclass(frozen=True)
 class AppConfig:
     stream_url: ValidUrl
@@ -34,8 +42,10 @@ class AppConfig:
 # Creates a config object from the YAML file at the given path
 def from_yaml(file_path: Path) -> AppConfig:
     logger.info(f"Loading config from YAML file: {file_path}")
+
     data = _read_yaml(file_path)
     config = _parse_data(data)
+
     logger.info("Config loaded successfully")
     return config
 
@@ -47,11 +57,15 @@ def _read_yaml(file_path: Path) -> dict[str, Any]:
             data = yaml.safe_load(f)
 
     except FileNotFoundError as e:
-        raise ConfigError(f"File not found: {file_path}") from e
+        raise LoadConfigFileError(f"Configuration file not found: {file_path}") from e
+    except IsADirectoryError as e:
+        raise LoadConfigFileError(
+            f"Configuration file is a directory: {file_path}"
+        ) from e
     except yaml.YAMLError as e:
-        raise ConfigError(f"Invalid YAML file: {file_path}") from e
+        raise LoadConfigFileError(f"Invalid YAML file: {file_path}") from e
     if not isinstance(data, dict):
-        raise ConfigError(f"Invalid YAML file: {file_path}")
+        raise LoadConfigFileError(f"Invalid YAML file: {file_path}")
 
     return data  # type: ignore
 
@@ -60,7 +74,7 @@ def _read_yaml(file_path: Path) -> dict[str, Any]:
 def _parse_data(data: dict[str, Any]) -> AppConfig:
     try:
         # Parse stream url
-        stream_url_value: str = get_value_or_fail(data, "stream_url")
+        stream_url_value: str = utils.get_typed_value_or_fail(data, "stream_url")
         stream_url = ValidUrl(stream_url_value)
         if stream_url.endswith(".m3u8"):
             audio_format: str = "mp4"
@@ -68,14 +82,14 @@ def _parse_data(data: dict[str, Any]) -> AppConfig:
             audio_format: str = "mp3"
 
         # Parse output directory
-        base_output_dir_value: str = get_value_or_fail(data, "output_dir")
+        base_output_dir_value: str = utils.get_typed_value_or_fail(data, "output_dir")
         base_output_dir = Path(base_output_dir_value)
         # Parse time zone
-        time_zone: str = get_value_or_fail(data, "time_zone")
+        time_zone: str = utils.get_typed_value_or_fail(data, "time_zone")
         user_timezone = pendulum.timezone(time_zone)  # type: ignore
 
         # Parse recording schedules
-        schedules: list[dict[str, Any]] = get_value_or_fail(
+        schedules: list[dict[str, Any]] = utils.get_typed_value_or_fail(
             data, "recording_schedules", list
         )
 
@@ -89,9 +103,9 @@ def _parse_data(data: dict[str, Any]) -> AppConfig:
         # Everything parsed successfully, return the config object
         return AppConfig(stream_url, base_output_dir, recording_schedules)
     except KeyError as e:
-        raise ConfigError(f"Missing key: {e}") from e
+        raise ParseConfigError(f"Missing key: {e}") from e
     except ValueError as e:
-        raise ConfigError(f"Invalid value: {e}") from e
+        raise ParseConfigError(f"Invalid value: {e}") from e
 
 
 # Parses a single recording schedule
@@ -101,12 +115,12 @@ def _parse_schedule(
     schedule_raw: dict[str, str],
     audio_format: str,
 ) -> RecordingSchedule:
-    title = get_value_or_fail(schedule_raw, "title")
+    title = utils.get_typed_value_or_fail(schedule_raw, "title")
     schedule_dir = base_output_dir / slugify(title)
 
     start_time, duration = _parse_start_time_and_duration(
-        get_value_or_fail(schedule_raw, "start_timeofday"),
-        get_value_or_fail(schedule_raw, "end_timeofday"),
+        utils.get_typed_value_or_fail(schedule_raw, "start_timeofday"),
+        utils.get_typed_value_or_fail(schedule_raw, "end_timeofday"),
         user_timezone,
     )
 
@@ -149,7 +163,7 @@ def _parse_start_time_and_duration(
 
     # Ensure the time could be parsed as a time of day
     if not isinstance(start_time_local, Time) or not isinstance(end_time_local, Time):
-        raise ConfigError(f"Invalid time format for start_time or end_time")
+        raise ParseConfigError(f"Invalid time format for start_time or end_time")
 
     # Calculate duration in local time (to ensure possible midnight rollover is handled correctly)
     duration = utils.get_duration_btw_times(start_time_local, end_time_local)
@@ -159,38 +173,3 @@ def _parse_start_time_and_duration(
         start_time_local, from_time_zone=user_timezone
     )
     return start_time_utc, duration
-
-
-T = TypeVar("T")
-
-
-# XXX: Make a dict wrapper/extension?
-# Case no type specified (assume str)
-@overload
-def get_value_or_fail(d: Dict[str, Any], key: str) -> str:
-    ...
-
-
-# Case type specified
-@overload
-def get_value_or_fail(d: Dict[str, Any], key: str, required_type: Type[T]) -> T:
-    ...
-
-
-# Gets the value of key, and fails if not present (None or empty) or not expected type
-def get_value_or_fail(
-    d: dict[str, Any], key: str, required_type: type[T] = str
-) -> Union[T, str]:
-    if key not in d:
-        raise KeyError(f"Key '{key}' not found in the dictionary")
-
-    value = d[key]
-    if value is None or len(value) == 0:
-        raise ValueError(f"Value for key '{key}' is None or empty")
-
-    if not isinstance(value, required_type):
-        raise TypeError(
-            f"Value for key '{key}' is not of the required type '{required_type.__name__}'"
-        )
-
-    return value

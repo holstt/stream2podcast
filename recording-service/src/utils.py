@@ -2,11 +2,12 @@ import argparse
 import logging
 import time
 from datetime import datetime
+from typing import Any, Dict, Type, TypeVar, Union, overload
 
 import pendulum
-from pendulum import Date, DateTime, Duration, Period, Time  # type: ignore
+from pendulum import DateTime, Duration, Period, Time  # type: ignore
 from pendulum.tz import timezone
-from pendulum.tz.timezone import Timezone
+from pendulum.tz.timezone import Timezone  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -159,3 +160,38 @@ class CountdownTimer:
     # Whether the timer has expired
     def is_expired(self) -> bool:
         return self.get_time_remaining() == Duration(seconds=0)
+
+
+T = TypeVar("T")
+
+
+# XXX: Make a dict wrapper/extension?
+# Case no type specified (assume str)
+@overload
+def get_typed_value_or_fail(d: Dict[str, Any], key: str) -> str:
+    ...
+
+
+# Case type specified
+@overload
+def get_typed_value_or_fail(d: Dict[str, Any], key: str, required_type: Type[T]) -> T:
+    ...
+
+
+# Gets the value of key, and fails if not present (None or empty) or not expected type
+def get_typed_value_or_fail(
+    d: dict[str, Any], key: str, required_type: type[T] = str
+) -> Union[T, str]:
+    if key not in d:
+        raise KeyError(f"Key '{key}' not found in the dictionary")
+
+    value = d[key]
+    if value is None or len(value) == 0:
+        raise ValueError(f"Value for key '{key}' is None or empty")
+
+    if not isinstance(value, required_type):
+        raise TypeError(
+            f"Value for key '{key}' is not of the required type '{required_type.__name__}'"
+        )
+
+    return value
