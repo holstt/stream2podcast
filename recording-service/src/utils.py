@@ -18,8 +18,8 @@ def read_config_path():
         "-c",
         "--config",
         required=False,
-        help="Path of json config file",
-        default="config.json",
+        help="Path of yaml config file",
+        default="config.yml",
     )
     args = vars(ap.parse_args())
 

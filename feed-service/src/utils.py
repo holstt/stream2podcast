@@ -1,6 +1,6 @@
-import time
-import logging
 import argparse
+import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ def read_config_path():
         "-c",
         "--config",
         required=False,
-        help="Path of json config file",
+        help="Path of yaml config file",
         default="config.yml",
     )
     args = vars(ap.parse_args())

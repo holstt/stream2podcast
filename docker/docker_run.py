@@ -28,7 +28,11 @@ print("Setup started!")
 
 config_file = sys.argv[1]
 
-print("Reading configuration ...")
+# Ensure config file exists
+if not os.path.exists(config_file):
+    raise RuntimeError(f"Config file {config_file} does not exist.")
+
+print(f"Reading configuration: {config_file}")
 
 # Read the configuration file
 config = configparser.ConfigParser()
@@ -38,6 +42,7 @@ config.read(config_file)
 required_mount_paths = {
     name: Path(path).resolve() for name, path in config.items("required_mount_paths")
 }
+
 optional_directory_mount_paths = {
     name: Path(path).resolve()
     for name, path in config.items("optional_directory_mount_paths")

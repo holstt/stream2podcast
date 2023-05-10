@@ -13,13 +13,28 @@ services:
       dockerfile: ../docker/Dockerfile
     # These volumes are expected to exist on host and accessible by the container user
     volumes:
-      - ${RECORDER_CONFIG_PATH}:/app/config.json:ro
-      - ${RECORDER_OUTPUT_DIR}:/app/recordings
+      - ${RECORDER_CONFIG_PATH?}:/app/config.yml:ro
+      - ${DATA_DIR?}:/app/recordings
     
-    # Run as this (unprivileged) user instead of root. If not set, will run as root.
+    # Run as this (unprivileged) user instead of root.
+    user: "${DOCKER_USER_ID?}:${DOCKER_GROUP_ID?}" 
+    environment:
+      - POETRY_VIRTUALENVS_CREATE=false # Set poetry config for docker user. Use system env. in container instead of creating a virtualenv
+      - PYTHONUNBUFFERED=1 # Prevents Python from buffering stdout and stder
+      
+  feed:
+    restart: on-failure:5 # Max 5 retries
+    build:
+      context: ../feed-service
+      dockerfile: ../docker/Dockerfile
+    # These volumes are expected to exist on host and accessible by the container user
+    volumes:
+      - ${FEED_CONFIG_PATH}:/app/config.yml:ro
+      - ${DATA_DIR}:/app/recordings
+    
+    # Run as this (unprivileged) user instead of root.
     user: "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" 
     environment:
       - POETRY_VIRTUALENVS_CREATE=false # Set poetry config for docker user. Use system env. in container instead of creating a virtualenv
       - PYTHONUNBUFFERED=1 # Prevents Python from buffering stdout and stder
-  
   
