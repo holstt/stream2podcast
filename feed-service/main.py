@@ -39,8 +39,8 @@ async def main(app_config: AppConfig):
 
 
 if __name__ == "__main__":
-    # utils.setup_logging()
-    utils.setup_logging(logging.INFO)
+    utils.setup_logging()
+    # utils.setup_logging(logging.DEBUG)
     try:
         config_file_path = utils.read_config_path()
         app_config = config.from_yaml(config_file_path)
