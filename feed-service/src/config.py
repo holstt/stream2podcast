@@ -48,7 +48,7 @@ def _read_yaml(file_path: Path) -> dict[str, Any]:
 # Validates and creates a config object from the given data
 def _create_config(data: dict[str, Any]) -> AppConfig:
     try:
-        base_dir = Path(data["base_directory"])
+        base_dir = Path(data["base_directory"]).resolve()
 
         if not os.access(base_dir, os.R_OK):
             raise ConfigError(
