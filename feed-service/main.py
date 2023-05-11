@@ -25,7 +25,7 @@ def update_feed(feed_file_changed: Path):
     )
 
 
-async def main(app_config: AppConfig):
+def main(app_config: AppConfig):
     if app_config.should_update_feeds_on_startup:
         feed_usecase.update_podcast_feeds(app_config.base_dir, app_config.base_url)
 
@@ -35,16 +35,16 @@ async def main(app_config: AppConfig):
         debounce_time, callback=lambda file_path: update_feed(file_path)
     )
     directory_monitor = FileMonitorService(app_config.base_dir, event_handler)
-    await directory_monitor.start()
+    directory_monitor.start()
 
 
 if __name__ == "__main__":
-    # utils.setup_logging()
-    utils.setup_logging(logging.INFO)
+    utils.setup_logging()
+    # utils.setup_logging(logging.DEBUG)
     try:
         config_file_path = utils.read_config_path()
         app_config = config.from_yaml(config_file_path)
-        asyncio.run(main(app_config))
+        main(app_config)
     except KeyboardInterrupt:
         pass
     except Exception as e:

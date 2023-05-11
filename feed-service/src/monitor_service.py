@@ -27,15 +27,16 @@ class FileMonitorService:
         self.observer = PollingObserver()
 
     # Starts monitoring
-    async def start(self) -> None:
+    def start(self) -> None:
         logger.info(f"Started monitoring directory for file changes: {self.root_dir}")
 
         self.observer.schedule(self.file_changed_handler, self.root_dir, recursive=True)  # type: ignore
         self.observer.start()
 
         try:
+            # Keep alive
             while True:
-                await asyncio.sleep(0)
+                time.sleep(1)
         finally:
             # Stop and wait for observer to finish
             self.observer.stop()
