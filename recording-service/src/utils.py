@@ -132,7 +132,7 @@ class TimeProvider:
 class CountdownTimer:
     def __init__(self, duration: Duration, time_provider: TimeProvider) -> None:
         super().__init__()
-        self.duration = duration
+        self.duration_total = duration
         self._time_provider = time_provider
         self._start_time: DateTime | None = None
 
@@ -149,7 +149,7 @@ class CountdownTimer:
         time_elapsed = (
             self._time_provider.get_current_time().diff(self._start_time).as_interval()
         )
-        time_left = self.duration - time_elapsed
+        time_left = self.duration_total - time_elapsed
 
         # If expired, return 0
         if time_left < Duration(seconds=0):

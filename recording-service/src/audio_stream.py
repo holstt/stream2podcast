@@ -81,12 +81,15 @@ class HttpAudioStreamAdapter(AudioStreamAdapter):
         countdown: utils.CountdownTimer,
         stream_name: Optional[str] = None,
     ) -> AsyncIterator[bytes]:
+        logger.debug(f"Starting to fetch audio stream for {countdown.duration_total}")
         countdown.start()
 
         # Keep fetching data from the stream until the countdown expires
-        while not countdown.is_expired():
-            async for chunk in self.http_stream_client.get_stream(url, stream_name):
-                yield chunk
+        async for chunk in self.http_stream_client.get_stream(url, stream_name):
+            yield chunk
+            if countdown.is_expired():
+                logger.debug("Countdown expired")
+                break
 
 
 # Get data from HLS stream (playlist url from which new segments are fetched continuously)
@@ -115,7 +118,6 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
         recorded_segments = new_segments[:-1]
 
         while not countdown.is_expired():
-            # Get new segments
             new_segments = self._get_new_segments(url, recorded_segments)
             logger.debug(f"{len(new_segments)} new segment(s) found")
 
@@ -124,6 +126,10 @@ class HlsAudioStreamAdapter(HttpAudioStreamAdapter):
                     self._to_url(url, segment), stream_name
                 ):
                     yield chunk
+                    # Immediately stop if countdown expires
+                    if countdown.is_expired():
+                        logger.debug("Countdown expired")
+                        break
 
             # Update recorded segments
             recorded_segments.extend(new_segments)
