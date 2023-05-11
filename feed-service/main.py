@@ -26,6 +26,9 @@ def update_feed(feed_file_changed: Path):
 
 
 async def main(app_config: AppConfig):
+    if app_config.should_update_feeds_on_startup:
+        feed_usecase.update_podcast_feeds(app_config.base_dir, app_config.base_url)
+
     # On a file change in the feed storage, require 5 minutes without further change to the file before triggering the callback that updates the corresponding podcast feed. This ensures that the podcast feed is not updated before a recording is finished.
     debounce_time = timedelta(minutes=5)
     event_handler = FileChangedEventHandler(

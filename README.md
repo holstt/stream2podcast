@@ -67,6 +67,9 @@ base_dir: "../recordings"
 
 # Base URL where the podcast feeds are served from
 base_url: "https://podcasts.mydomain.com/"
+
+# OPTIONAL: Whether to update feeds on startup. Defaults to false.
+should_update_feeds_on_startup: true
 ```
 
 Rename the file to `config.yml` and adapt the configuration to your use case.

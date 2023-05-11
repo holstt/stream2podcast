@@ -18,6 +18,7 @@ class ConfigError(Exception):
 class AppConfig:
     base_dir: Path
     base_url: HttpUrl
+    should_update_feeds_on_startup: bool
 
 
 # Creates a config object from the YAML file at the given path
@@ -56,7 +57,10 @@ def _create_config(data: dict[str, Any]) -> AppConfig:
             )
 
         base_url = HttpUrl(data["base_url"], scheme="https")
+        should_update_feeds_on_startup = data.get(
+            "should_update_feeds_on_startup", False
+        )
     except KeyError as e:
         raise ConfigError(f"Missing key: {e}") from e
 
-    return AppConfig(base_dir, base_url)
+    return AppConfig(base_dir, base_url, should_update_feeds_on_startup)
