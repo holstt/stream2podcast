@@ -6,6 +6,7 @@ from typing import Any
 
 import yaml
 
+import src.utils as utils
 from src.models import ValidUrl
 
 logger = logging.getLogger(__name__)
@@ -34,8 +35,7 @@ def from_yaml(file_path: Path) -> AppConfig:
 # Returns the raw data from the YAML file at the given path
 def _read_yaml(file_path: Path) -> dict[str, Any]:
     try:
-        with open(file_path, "r") as f:
-            data: dict[str, Any] | Any = yaml.safe_load(f)
+        data = utils.read_yml_file(file_path)
 
     except FileNotFoundError as e:
         raise ConfigError(f"File not found: {file_path}") from e

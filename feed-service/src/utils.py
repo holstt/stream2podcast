@@ -1,8 +1,18 @@
 import argparse
 import logging
 import time
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 logger = logging.getLogger(__name__)
+
+
+def read_yml_file(file_path: Path) -> dict[str, Any] | Any:
+    logger.debug(f"Reading yml file: {file_path}")
+    with open(file_path, "r") as file:
+        return yaml.safe_load(file)
 
 
 def read_config_path():

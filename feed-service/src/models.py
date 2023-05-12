@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 import validators  # type: ignore
+from pydantic import BaseModel, Field, validator  # type: ignore
 from typing_extensions import override
 
 
@@ -29,6 +30,18 @@ class PodcastEpisode:
             raise ValueError(f"UUID cannot be empty")
         if self.file_size_bytes <= 0:
             raise ValueError(f"File size cannot be 0 or negative")
+
+
+class PodcastMetadata(BaseModel):
+    title: str
+
+    # Optional
+    description: Optional[str] = None
+    image_url: Optional[ValidUrl] = None
+
+    @validator("image_url", pre=True)
+    def validate_image_url(cls, value: str) -> ValidUrl:
+        return ValidUrl(value)
 
 
 @dataclass(frozen=True)

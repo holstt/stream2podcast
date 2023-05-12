@@ -14,7 +14,7 @@ from pydantic import HttpUrl
 from slugify import slugify
 
 from src.infra.podcast_file_utils import PodcastFileNameParser, PodcastFileReader
-from src.models import Podcast, PodcastEpisode, ValidUrl
+from src.models import Podcast, PodcastEpisode, PodcastMetadata, ValidUrl
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ class PodcastLoadError(Exception):
 # TODO: Not resp. for url creation, move further up
 def create_podcast_url(podcast_title: str, base_url: ValidUrl) -> ValidUrl:
     return ValidUrl(
+        # Sluggify to make it url safe
         # Add / for directory
         urljoin(base_url, (slugify(podcast_title) + "/"))
     )
@@ -66,12 +67,13 @@ class LocalPodcastRepository:
 
         self._assert_dir_exists(podcast_dir)
 
-        # Podcast directory assumed to have the name of the podcast
-        podcast_title = self._parser.parse_title(podcast_dir.name)
+        # Get podcast metadata
+        metadata_yml = self._file_reader.read_metadata(podcast_dir)
+        metadata = PodcastMetadata(**metadata_yml)
 
         # Generate url from podcast title
         podcast_url = create_podcast_url(
-            podcast_title, self._base_url
+            metadata.title, self._base_url
         )  # TODO: Not resp. for url creation, move further up
 
         # Load episode data from file names in podcast directory
@@ -80,16 +82,12 @@ class LocalPodcastRepository:
             episode = self._parser.parse_episode(file_entry, podcast_url)
             episodes.append(episode)
 
-        # Get meta data file # TODO: Validate (see recording-service), create metadata class
-        metadata = self._file_reader.read_metadata(podcast_dir)
-
         podcast = Podcast(
-            title=podcast_title,
+            title=metadata.title,
             episodes=episodes,
             feed_url=podcast_url,
-            # Get optional metadata
-            description=metadata.get("description"),
-            image_url=metadata.get("image_url"),
+            description=metadata.description,
+            image_url=metadata.image_url,
         )
 
         logger.debug(

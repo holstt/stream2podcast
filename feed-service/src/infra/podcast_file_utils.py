@@ -59,9 +59,6 @@ class PodcastFileNameParser:
 
         return episode
 
-    def parse_title(self, podcast_dir_name: str):
-        return slugify(podcast_dir_name, separator=" ").title()
-
 
 class PodcastFileReader:
     VALID_EPISODE_FILE_EXTENSIONS = (".mp3", ".mp4")  # TODO: From config
