@@ -6,8 +6,8 @@ from threading import Lock
 from pydantic import HttpUrl
 
 import src.feed_generator as feed_generator
-import src.feed_loader as feed_loader
-import src.feed_usecase as feed_usecase
+from src.infra.repository import LocalPodcastRepository
+from src.models import ValidUrl
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ FEED_FILE_NAME = "feed.rss"
 
 
 # Updates podcast feed .rss files for ALL podcasts located in the given base directory
-def update_podcast_feeds(base_dir: Path, base_url: HttpUrl):
+def update_podcast_feeds(base_dir: Path, base_url: ValidUrl):
     logger.info(
         f"Updating podcast feeds for all podcasts in '{base_dir}' using base url '{base_url}'"
     )
@@ -32,7 +32,7 @@ def update_podcast_feeds(base_dir: Path, base_url: HttpUrl):
 
 
 # Updates podcast feed .rss file for the podcast located in the given directory
-def update_podcast_feed(podcast_dir: Path, base_url: HttpUrl):
+def update_podcast_feed(podcast_dir: Path, base_url: ValidUrl):
     logger.info(f"Updating podcast feed for podcast in '{podcast_dir}'")
     podcast_feed: bytes = _generate_podcast_feed(
         podcast_dir,
@@ -49,8 +49,9 @@ def update_podcast_feed(podcast_dir: Path, base_url: HttpUrl):
 
 # Generates a podcast feed based on the content of the given podcast directory
 # NB: Returns bytes
-def _generate_podcast_feed(podcast_dir: Path, base_url: HttpUrl) -> bytes:
-    podcast = feed_loader.load_podcast(podcast_dir, base_url)
+def _generate_podcast_feed(podcast_dir: Path, base_url: ValidUrl) -> bytes:
+    repo = LocalPodcastRepository(base_dir=Path(""), base_url=base_url)
+    podcast = repo.get(podcast_dir)
     return feed_generator.generate(podcast)
 
 

@@ -15,12 +15,12 @@ def generate(podcast: Podcast) -> bytes:
 
     fg = feed.FeedGenerator()
 
-    # fg.author({"name": "John Doe", "email": "john@example.com"})  # TODO: From config
+    # fg.author({"name": "John Doe", "email": "john@example.com"})  # TODO: From metadata
 
     # Add general podcast info
     fg.title(podcast.title)
     fg.link(href=podcast.feed_url, rel="self")
-    # fg.subtitle("Feed subtitle")  # TODO: From config
+    # fg.subtitle("Feed subtitle")  # TODO: From metadata
 
     # Set optional fields
     fg.description(podcast.description) if podcast.description else fg.description(

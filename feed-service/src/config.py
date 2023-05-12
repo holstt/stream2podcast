@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import DirectoryPath, HttpUrl
+
+from src.models import ValidUrl
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class ConfigError(Exception):
 @dataclass(frozen=True)
 class AppConfig:
     base_dir: Path
-    base_url: HttpUrl
+    base_url: ValidUrl
     should_update_feeds_on_startup: bool
 
 
@@ -56,7 +57,7 @@ def _create_config(data: dict[str, Any]) -> AppConfig:
                 f"Directory does not exist or is not readable: {base_dir}"
             )
 
-        base_url = HttpUrl(data["base_url"], scheme="https")
+        base_url = ValidUrl(data["base_url"])
         should_update_feeds_on_startup = data.get(
             "should_update_feeds_on_startup", False
         )

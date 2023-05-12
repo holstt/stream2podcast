@@ -4,6 +4,7 @@ recordings
 temp*
 *config*
 *.ini
+*.pickle
 
 !*example*
 
