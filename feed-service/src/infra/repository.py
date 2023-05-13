@@ -1,29 +1,21 @@
-# ignore type errors due to no type stubs for feedgen
-# pyright: basic
 import logging
-import os
-import re
-from abc import ABC, abstractmethod
-from datetime import datetime, timezone  # type: ignore
 from pathlib import Path
-from typing import Any
 from urllib.parse import urljoin
 
-import yaml
-from pydantic import HttpUrl
 from slugify import slugify
 
-from src.infra.podcast_file_utils import PodcastFileNameParser, PodcastFileReader
-from src.models import Podcast, PodcastEpisode, PodcastMetadata, ValidUrl
+from src.domain.models import Podcast, PodcastEpisode, PodcastMetadata, ValidUrl
+from src.infra.file_parser import PodcastFileNameParser
+from src.infra.file_reader import PodcastFileService
 
 logger = logging.getLogger(__name__)
 
 
-class PodcastLoadError(Exception):
+class RepositoryError(Exception):
     pass
 
 
-# TODO: Use base PodcastRepository
+# TODO: Use base PodcastRepository in domain layer
 # class PodcastRepository(ABC):
 #     @abstractmethod
 #     def get(self, id: str) -> Podcast:
@@ -34,7 +26,7 @@ class PodcastLoadError(Exception):
 #         pass
 
 
-# TODO: Not resp. for url creation, move further up
+# TODO: Not resp. for url creation, move to infra
 def create_podcast_url(podcast_title: str, base_url: ValidUrl) -> ValidUrl:
     return ValidUrl(
         # Sluggify to make it url safe
@@ -44,28 +36,33 @@ def create_podcast_url(podcast_title: str, base_url: ValidUrl) -> ValidUrl:
 
 
 # Reposistory for loading podcasts from the local file system
-class LocalPodcastRepository:
-    def __init__(self, base_dir: Path, base_url: ValidUrl):
+# Adapts file system representation to the podcast domain model
+class FileSystemPodcastRepository:
+    def __init__(
+        self,
+        base_dir: Path,
+        base_url: ValidUrl,
+        parser: PodcastFileNameParser,
+        file_reader: PodcastFileService,
+    ):
         super().__init__()
-        self._base_dir = base_dir
+        self._base_dir = base_dir  # TODO: Use base dir
         # XXX: Ctor injection
-        self._parser = PodcastFileNameParser()
-        self._file_reader = PodcastFileReader()
+        self._parser = parser
+        self._file_reader = file_reader
         self._base_url = base_url
 
-    # Raise exception if no access to the base directory
-    # Call at startup to fail fast
-    def assert_access(self):
-        if not os.access(self._base_dir, os.R_OK | os.W_OK | os.X_OK):
-            raise PodcastLoadError(
-                f"Unable to access podcast directory: {self._base_dir}"
-            )
+    # Returns all podcasts from the base directory
+    def get_all(self):
+        logger.debug(f"Loading all podcasts")
+        for podcast_dir in self._file_reader.read_podcast_dirs():
+            yield self.get(podcast_id=podcast_dir.name)
 
     # Returns podcast from a given directory
-    def get(self, podcast_dir: Path) -> Podcast:
-        logger.debug(f"Loading podcast from directory: {podcast_dir}")
-
-        self._assert_dir_exists(podcast_dir)
+    def get(self, podcast_id: str) -> Podcast:
+        logger.debug(f"Loading podcast: {podcast_id}")
+        # Resolve path to podcast directory
+        podcast_dir = self._base_dir / podcast_id
 
         # Get podcast metadata
         metadata_yml = self._file_reader.read_metadata(podcast_dir)
@@ -74,12 +71,12 @@ class LocalPodcastRepository:
         # Generate url from podcast title
         podcast_url = create_podcast_url(
             metadata.title, self._base_url
-        )  # TODO: Not resp. for url creation, move further up
+        )  # TODO: Not resp. for url creation, move to infra
 
         # Load episode data from file names in podcast directory
         episodes: list[PodcastEpisode] = []
         for file_entry in self._file_reader.read_episode_files(podcast_dir):
-            episode = self._parser.parse_episode(file_entry, podcast_url)
+            episode = self._parser.parse_episode_file(file_entry, podcast_url)
             episodes.append(episode)
 
         podcast = Podcast(
@@ -90,16 +87,9 @@ class LocalPodcastRepository:
             image_url=metadata.image_url,
         )
 
-        logger.debug(
-            f"Podcast '{podcast.title}' with {len(podcast)} episode(s) loaded from directory: {podcast_dir}"
-        )
+        logger.debug(f"Podcast '{podcast.title}' with {len(podcast)} episode(s) loaded")
 
         return podcast
 
-    # Raises exception if given directory does not exist
-    def _assert_dir_exists(self, podcast_dir: Path):
-        if not os.path.isdir(podcast_dir):
-            raise PodcastLoadError(f"Directory does not exist: {podcast_dir}")
-
-    # def update_feed(feed: str):
-    #     pass
+    def save_feed(self, feed: bytes, podcast_title: str) -> Path:
+        return self._file_reader.write_feed(feed, podcast_title)

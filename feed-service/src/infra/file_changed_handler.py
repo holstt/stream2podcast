@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import time
 from datetime import timedelta
@@ -7,54 +6,25 @@ from threading import Timer
 from typing import Callable
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
-from watchdog.observers.polling import PollingObserver
+
+from src.domain.models import PodcastUpdatedEvent
+from src.infra.file_reader import PodcastFileService
 
 logger = logging.getLogger(__name__)
-
-# This service is monitoring for changes in the feed files
-
-
-# Recursively monitors a directory for file changes
-class FileMonitorService:
-    def __init__(
-        self, root_dir: Path, file_changed_handler: FileSystemEventHandler
-    ) -> None:
-        super().__init__()
-        self.root_dir = root_dir
-        self.file_changed_handler = file_changed_handler
-
-        # Polling observer is used (instead of default Oberver that uses system events) as system events for files that are being written to by another process are not always triggered on some OS's (e.g. Windows)
-        self.observer = PollingObserver()
-
-    # Starts monitoring
-    def start(self) -> None:
-        logger.info(f"Started monitoring directory for file changes: {self.root_dir}")
-
-        self.observer.schedule(self.file_changed_handler, self.root_dir, recursive=True)  # type: ignore
-        self.observer.start()
-
-        try:
-            # Keep alive
-            while True:
-                time.sleep(1)
-        finally:
-            # Stop and wait for observer to finish
-            self.observer.stop()
-            self.observer.join()
 
 
 # This handler absorbs all file events as long as they occur within the given debounce time
 # The debounce time is reset every time a new file event occurs for the same file
-# First when the debounce time has passed without any new file events, the callback is triggered
+# First when the debounce time has passed without any new file events for the given file, the callback is triggered
 class FileChangedEventHandler(FileSystemEventHandler):
     # Callback gets passed the path of the file that triggered the event
     def __init__(
-        self, debounce_time: timedelta, callback: Callable[[Path], None]
+        self, debounce_time: timedelta, callback: Callable[[PodcastUpdatedEvent], None]
     ) -> None:
         super().__init__()
-        self.callback = callback
+        self._callback = callback
         self._debounce_time = debounce_time
-        # _pending_file_changed_events: All file events currently waiting for their debounce time to pass
+        # All file events currently waiting for their debounce time to pass
         self._pending_file_changed_events: dict[
             Path, float
         ] = {}  # File path -> last file event timestamp
@@ -62,12 +32,16 @@ class FileChangedEventHandler(FileSystemEventHandler):
     # Triggers on any kind of file change
     def on_any_event(self, event: FileSystemEvent) -> None:  # type: ignore
         logger.debug(f"{event.event_type} - {event.src_path}")
+        file_changed_path = Path(event.src_path)
 
         # Ignore directory changes (as this is always triggered when a file changes)
-        if event.is_directory:
+        # Ignore any changes to the .rss feed files themselves
+        if (
+            file_changed_path.is_dir()
+            or file_changed_path.name
+            == PodcastFileService.FEED_FILE_NAME  # TODO: Inject ignore patterns
+        ):
             return
-
-        file_changed_path = Path(event.src_path)
 
         current_time = time.time()
         # Check if event already pending for this path
@@ -91,13 +65,15 @@ class FileChangedEventHandler(FileSystemEventHandler):
         time_passed_since_last_event = current_time - last_event_time
 
         if time_passed_since_last_event >= self._debounce_time.total_seconds():
-            self._on_file_event(file_path)
+            self._on_file_changed_event(file_path)
             del self._pending_file_changed_events[file_path]
         else:
             # Start a new debounce timer
             # XXX: Maybe just a new thread and a while loop instead of keep starting new timers/threads?
             self._start_debounce_timer(file_path)
 
-    def _on_file_event(self, file_path: Path) -> None:
-        logger.info(f"File change detected: {file_path}")
-        self.callback(file_path)
+    def _on_file_changed_event(self, file_path: Path) -> None:
+        logger.info(
+            f"File change detected after debounce time ({self._debounce_time}): {file_path}"
+        )
+        self._callback(PodcastUpdatedEvent(episode_id=file_path))

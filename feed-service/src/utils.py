@@ -15,7 +15,13 @@ def read_yml_file(file_path: Path) -> dict[str, Any] | Any:
         return yaml.safe_load(file)
 
 
-def read_config_path():
+def get_config_path_from_args():
+    args = get_args()
+    config_file_path = args["config"]
+    return config_file_path
+
+
+def get_args():
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "-c",
@@ -25,11 +31,7 @@ def read_config_path():
         default="config.yml",
     )
     args = vars(ap.parse_args())
-
-    # Get config from args
-    config_file_path = args["config"]
-
-    return config_file_path
+    return args
 
 
 def setup_logging(level: int = logging.INFO):
