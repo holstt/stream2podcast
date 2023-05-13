@@ -19,6 +19,7 @@ class Dependencies(NamedTuple):
     repo: FileSystemPodcastRepository
     generator: RssFeedAdapter
     usecase: GeneratePodcastFeedUseCase
+    file_service: PodcastFileService
     feed_updated_handler: PodcastUpdatedEventHandler
     file_changed_handler: FileChangedEventHandler
     directory_monitor: FileChangedMonitor
@@ -54,7 +55,14 @@ def resolve(app_config: AppConfig):
         repo,
         rss_generator,
         usecase,
+        file_service,
         feed_updated_handler,
         file_changed_handler,
         directory_monitor,
     )
+
+
+def run_startup_checks(dependencies: Dependencies):
+    logger.info("Running startup checks")
+    dependencies.file_service.assert_access()
+    logger.info("Startup checks completed")

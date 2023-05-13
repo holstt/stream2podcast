@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from threading import Lock
@@ -5,6 +6,8 @@ from typing import Any
 
 import yaml
 from slugify import slugify
+
+logger = logging.getLogger(__name__)
 
 # Adapter for local podcast file storage
 
@@ -61,9 +64,10 @@ class PodcastFileService:
     # Raise exception if no access to the base directory
     # Call at startup to fail fast
     def assert_access(self):
+        logger.info(f"Checking access to podcast base directory: {self._base_dir}")
         if not os.access(self._base_dir, os.R_OK | os.W_OK | os.X_OK):
             raise PodcastFileServiceError(
-                f"Unable to access podcast directory: {self._base_dir}"
+                f"Unable to access the base directory for podcasts: {self._base_dir}"
             )
 
     # XXX: Not used atm

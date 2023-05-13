@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 def main(app_config: AppConfig):
     deps = dependency_resolver.resolve(app_config)
+    dependency_resolver.run_startup_checks(deps)
     if app_config.should_update_feeds_on_startup:
         deps.usecase.generate_feed(podcast_id=app_config.base_dir.name)
 
