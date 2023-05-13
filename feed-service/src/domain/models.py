@@ -25,9 +25,9 @@ class ValidUrl(str):
 class PodcastEpisode:
     date: datetime
     title: str
-    media_url: ValidUrl  # Full url to the episode file. # XXX: Move to infra
     file_size_bytes: int  # Size of the episode file in bytes
     uuid: str  # Unique id for the episode
+    file_name: str  # Name of the episode file
 
     def __post_init__(self):
         if not self.title:
@@ -42,7 +42,7 @@ class PodcastEpisode:
 class Podcast:
     title: str
     episodes: list[PodcastEpisode]
-    feed_url: ValidUrl  # Full url to the podcast feed
+    file_name: str  # Name of the podcast file
 
     # Optional
     description: Optional[str] = None

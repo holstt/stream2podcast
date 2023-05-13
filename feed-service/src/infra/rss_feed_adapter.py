@@ -1,17 +1,38 @@
 # switch to basic due to no type stubs for feedgen
 # pyright: basic
 import logging
+from urllib.parse import urljoin
 
 from feedgen import feed
 from feedgen.entry import FeedEntry
 
-from src.domain.models import Podcast, PodcastEpisode
+from src.domain.models import Podcast, PodcastEpisode, ValidUrl
 
 logger = logging.getLogger(__name__)
 
 
+class UrlGenerator:
+    def __init__(self, base_url: ValidUrl) -> None:
+        self._base_url = base_url
+
+    def generate_podcast_url(self, podcast_file_name: str) -> ValidUrl:
+        return ValidUrl(
+            # Add / for directory
+            urljoin(self._base_url, podcast_file_name + "/")
+        )
+
+    def generate_episode_url(
+        self, podcast_url: ValidUrl, episode_file_name: str
+    ) -> ValidUrl:
+        return ValidUrl(urljoin(podcast_url, episode_file_name))
+
+
 # Converts a podcast domain model to an RSS feed
 class RssFeedAdapter:
+    def __init__(self, url_generator: UrlGenerator) -> None:
+        super().__init__()
+        self._url_generator = url_generator
+
     # Generates a rss podcast feed from the given podcast
     # NB: Returned as bytes
     def generate_feed(self, podcast: Podcast) -> bytes:
@@ -23,7 +44,9 @@ class RssFeedAdapter:
 
         # Add general podcast info
         rss_feed.title(podcast.title)
-        rss_feed.link(href=podcast.feed_url, rel="self")
+
+        podcast_url = self._url_generator.generate_podcast_url(podcast.file_name)
+        rss_feed.link(href=podcast_url, rel="self")
         # fg.subtitle("Feed subtitle")  # TODO: From metadata
 
         # Set optional fields
@@ -38,7 +61,10 @@ class RssFeedAdapter:
 
         # Add entry for each episode
         for episode in podcast.episodes:
-            feed_entry = self.create_entry(episode)
+            episode_media_url = self._url_generator.generate_episode_url(
+                podcast_url, episode.file_name
+            )
+            feed_entry = self._create_entry(episode, episode_media_url)
             rss_feed.add_entry(feed_entry)
 
         # Generate the rss feed.
@@ -47,15 +73,17 @@ class RssFeedAdapter:
         logger.debug(f"Podcast feed generation completed for: {podcast.title}")
         return rssfeed
 
-    def create_entry(self, episode: PodcastEpisode):
+    def _create_entry(
+        self, episode: PodcastEpisode, episode_media_url: ValidUrl
+    ) -> FeedEntry:
         feed_entry = FeedEntry()
         feed_entry.title(episode.title)
         # Webpage associated with episode. Let's just use the media url
-        feed_entry.link(href=episode.media_url)
+        feed_entry.link(href=episode_media_url)
 
         # Url to media file
         feed_entry.enclosure(
-            url=episode.media_url,
+            url=episode_media_url,
             length=str(episode.file_size_bytes),
             type="audio/mpeg",
         )
