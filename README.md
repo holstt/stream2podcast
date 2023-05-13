@@ -108,7 +108,27 @@ python ./main.py
 
 ## Docker 🐳
 
-_...coming soon_
+\*Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+
+**3. From project root, navigate to the `./docker` folder**
+
+```
+cd docker
+```
+
+**4. Run the docker project using a helper script**
+
+Please see the `docker_run.py` helper script, that can be used to run the docker project. The script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. The container will run as the current user (rather than defaulting to root). The script requires a configuration `.ini` file passed as argument. An example is provided in `example.ini`. Then run:
+
+```
+python docker_run.py path/to/your/config.ini
+```
+
+For a simpler setup, just replace the environment variables in `docker-compose.yml` with concrete values and delete the `user` property. Then run:
+
+```
+docker-compose up -d
+```
 
 ## Output
 
