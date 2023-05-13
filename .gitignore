@@ -1,6 +1,12 @@
 # CUSTOM
 recordings
-config.json
+.vscode
+temp*
+*config*
+*.ini
+*.pickle
+
+!*example*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

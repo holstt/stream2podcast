@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "recording-service"
+version = "0.1.0"
+description = "Records audio from http streams and saves it to disk"
+authors = ["holstt"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^1.10.7"
+m3u8 = "^3.4.0"
+mutagen = "^1.46.0"
+python-slugify = "^8.0.1"
+pyyaml = "^6.0"
+pendulum = "^2.1.2"
+aiohttp = "^3.8.4"
+isort = "^5.12.0"
+validators = "^0.20.0"
+pytz = "^2023.3"
+apscheduler = "^3.10.1"
+croniter = "^1.3.14"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1.0" 
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+
+# In strict, but don't show these errors
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
+reportUnusedFunction = "none"
+reportUnknownMemberType = "none"
+
+
+# Not in strict, but show these errors
+reportMissingSuperCall = "error"
+reportCallInDefaultInitializer = "error"
+reportImplicitOverride = "info"
+reportImplicitStringConcatenation = "error"
+reportPropertyTypeMismatch = "error"
+reportShadowedImports = "error"
+reportUninitializedInstanceVariable = "error"
+reportUnnecessaryTypeIgnoreComment = "info" 	
