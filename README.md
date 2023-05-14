@@ -21,7 +21,7 @@ cd stream2podcast
 
 **2. Set up configuration**
 
-The project consists of two services: `recording-service` and `feed-service`. The `recording-service` is responsible for recording the audio streams and storing them on disk, while the `feed-service` is responsible for generating podcast RSS feeds based on these recordings. The two services run separately and are fully independent of each other. `feed-service` is simply monitoring the output directory of the `recording-service` for any changes. When a new recording file is added (and recording has finished), the `feed-service` registers the change and updates the RSS feed for that particular podcast. Please see the `Output` section for more information.
+The project consists of two services: `recording-service` and `feed-service`. The `recording-service` is responsible for recording the audio streams and storing them on disk, while the `feed-service` is responsible for generating podcast RSS feeds based on these recordings. The two services run separately and are fully independent of each other. `feed-service` is simply monitoring the output directory of the `recording-service` for any changes. When a new recording file is added (and recording has finished), the `feed-service` registers the change and updates the RSS feed for that particular podcast. Please see the [Output](https://github.com/holstt/stream2podcast#output) section for more information.
 
 **2.1. Configure recording-service**
 
