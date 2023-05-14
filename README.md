@@ -4,11 +4,16 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create podcas
 
 ## Features
 
--   Record a HTTP audio stream and save it to disk. Works with audio streams following either ICY or HLS protocol.
--   Create multiple recording schedules to record at different time periods throughout the day (using [APScheduler - Advanced Python Scheduler](https://github.com/agronholm/apscheduler))
--   Generate a podcast RSS feed from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
--   Publish as podcast: The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (RSS feed file + recordings) from the root of the output directory.
--   Docker support: Easy deployment using Docker Compose
+-   **Record and save**
+    - Record a HTTP audio stream and save it to disk. Works with audio streams following either ICY or HLS protocol.
+-   **Create recording schedules**
+    - Create multiple recording schedules to record at different time periods throughout the day
+-   **Generate RSS feeds**
+    - Generate a podcast RSS feed from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
+-   **Publish as podcast**
+    - The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (RSS feed file + recordings) from the root of the output directory.
+-   **Docker support**
+    - Easy deployment using Docker Compose
 
 ## Getting Started
 
@@ -169,7 +174,7 @@ Example: `2023-04-03--1230-1400--recording-name--ee1ad7c6-95bf-4116-a1f8-060053e
 
 ### feed-service
 
-The output of `recording-service` enables the `feed-service` to generate the corresponding podcast feeds. `feed-service` generates a podcast feed for each recording schedule, and each recording is represented as an episode in that feed. The resulting `feed.rss` file is saved in the same directory as the recordings. As such, the file structure of the output directory ends up looking like this:
+Based on the output of `recording-service` the `feed-service` is able to generate the corresponding podcast feeds. `feed-service` generates a podcast feed for each recording schedule, and each recording is represented as an episode in that feed. The resulting `feed.rss` file is saved in the same directory as the recordings. As such, the file structure of the output directory ends up looking like this:
 
 ```bash
 <output_dir>/
