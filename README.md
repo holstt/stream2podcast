@@ -121,15 +121,17 @@ python ./main.py
 cd docker
 ```
 
-**4. Run the docker project using the included helper script**
+**4. Option 1: Run the docker project as current user**
 
-Please see the `docker_run.py` helper script, that can be used to run the docker project. The script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. The container will run as the current user (rather than defaulting to root). The script requires a configuration `.ini` file passed as argument. An example is provided in `example.ini`. 
+The `docker_run.py` helper script can be used to set up and run the docker project as the current user (rather than defaulting to root). The script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. A configuration `.ini` file is required, and its path should be passed as argument to the helper script. An example is provided in `example.ini`. 
 
 Then run:
 
 ```
 python docker_run.py path/to/your/config.ini
 ```
+
+**4. Option 2 (simple setup): Run the docker project as root**
 
 For a simpler setup, just replace the environment variables in `docker-compose.yml` with concrete values and delete the `user` property. Then run:
 
