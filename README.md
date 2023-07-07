@@ -4,11 +4,16 @@ Stream2Podcast lets you record audio streams (e.g. live radio) and create podcas
 
 ## Features
 
--   Record a HTTP audio stream and save it to disk (works with audio streams following either ICY or HLS protocol)
--   Create multiple recording schedules to record at different time periods throughout the day (using [APScheduler - Advanced Python Scheduler](https://github.com/agronholm/apscheduler))
--   Generate a podcast RSS feed from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
--   Publish as podcast: The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (RSS feed file + recordings) from the root of the output directory.
--   Docker support: Easy deployment using Docker Compose
+-   **Record and save**
+    - Record a HTTP audio stream and save it to disk. Works with audio streams following either ICY or HLS protocol.
+-   **Create recording schedules**
+    - Create multiple recording schedules to record at different time periods throughout the day
+-   **Generate RSS feeds**
+    - Generate a podcast RSS feed from the recordings produced by each schedule (i.e. turns a recording schedule into a podcast with each recording representing an episode)
+-   **Publish as podcast**
+    - The output of `stream2podcast` makes it simple to set up a webserver (e.g. [Nginx](https://www.nginx.com/)) to serve the static files (RSS feed file + recordings) from the root of the output directory.
+-   **Docker support**
+    - Easy deployment using Docker Compose
 
 ## Getting Started
 
@@ -21,9 +26,9 @@ cd stream2podcast
 
 **2. Set up configuration**
 
-The project consists of two services: `recording-service` and `feed-service`. The `recording-service` is responsible for recording the audio streams and storing them on disk, while the `feed-service` is responsible for generating podcast RSS feeds based on these recordings. The two services run separately and are fully independent of each other. `feed-service` is simply monitoring the output directory of the `recording-service` for any changes, and will update the podcast RSS feed whenever a new recording is added for that particular podcast.
+The project consists of two services: `recording-service` and `feed-service`. The `recording-service` is responsible for recording the audio streams and storing them on disk, while the `feed-service` is responsible for generating podcast RSS feeds based on these recordings. The two services run separately and are fully independent of each other. `feed-service` is simply monitoring the output directory of the `recording-service` for any changes. When a new recording file is added (and recording has finished), the `feed-service` registers the change and updates the RSS feed for that particular podcast. Please see the [Output](https://github.com/holstt/stream2podcast#output) section for more information.
 
-### recording-service
+**2.1. Configure recording-service**
 
 `./recording-service/config.example.yml` provides an example of the required configuration format:
 
@@ -57,7 +62,7 @@ Rename the file to `config.yml` and adapt the configuration to your use case. Re
 
 `frequency` is a **day-of-week** cron expression which also supports abbreviated names (e.g. `"mon, tue, wed, thu, fri"` or `"mon-fri"`).
 
-### feed-service
+**2.2. Configure feed-service**
 
 `./feed-service/config.example.yml` provides an example of the required configuration format:
 
@@ -116,9 +121,11 @@ python ./main.py
 cd docker
 ```
 
-**4. Run the docker project using a helper script**
+**4. Run the docker project using the included helper script**
 
-Please see the `docker_run.py` helper script, that can be used to run the docker project. The script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. The container will run as the current user (rather than defaulting to root). The script requires a configuration `.ini` file passed as argument. An example is provided in `example.ini`. Then run:
+Please see the `docker_run.py` helper script, that can be used to run the docker project. The script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. The container will run as the current user (rather than defaulting to root). The script requires a configuration `.ini` file passed as argument. An example is provided in `example.ini`. 
+
+Then run:
 
 ```
 python docker_run.py path/to/your/config.ini
@@ -167,7 +174,7 @@ Example: `2023-04-03--1230-1400--recording-name--ee1ad7c6-95bf-4116-a1f8-060053e
 
 ### feed-service
 
-The output of `recording-service` enables the `feed-service` to generate the corresponding podcast feeds. `feed-service` generates a podcast feed for each recording schedule, and each recording is represented as an episode in that feed. The resulting `feed.rss` file is saved in the same directory as the recordings. As such, the file structure of the output directory ends up looking like this:
+Based on the output of `recording-service` the `feed-service` is able to generate the corresponding podcast feeds. `feed-service` generates a podcast feed for each recording schedule, and each recording is represented as an episode in that feed. The resulting `feed.rss` file is saved in the same directory as the recordings. As such, the file structure of the output directory ends up looking like this:
 
 ```bash
 <output_dir>/
