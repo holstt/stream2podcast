@@ -89,9 +89,7 @@ def _parse_data(data: dict[str, Any]) -> AppConfig:
         user_timezone = pendulum.timezone(time_zone)  # type: ignore
 
         # Parse recording schedules
-        schedules: list[dict[str, Any]] = utils.get_typed_value_or_fail(
-            data, "recording_schedules", list
-        )
+        schedules = utils.get_typed_value_or_fail(data, "recording_schedules", list)
 
         recording_schedules: list[RecordingSchedule] = []
         for schedule in schedules:
@@ -112,7 +110,7 @@ def _parse_data(data: dict[str, Any]) -> AppConfig:
 def _parse_schedule(
     base_output_dir: Path,
     user_timezone: Timezone,
-    schedule_raw: dict[str, str],
+    schedule_raw: Any,
     audio_format: str,
 ) -> RecordingSchedule:
     title = utils.get_typed_value_or_fail(schedule_raw, "title")
@@ -134,6 +132,7 @@ def _parse_schedule(
     frequency = schedule_raw.get("frequency", None)
 
     # Pass only if frequency if has value
+    # XXX: Hack to avoid duplicate instance init. Better way?
     kwargs = {}
     if frequency:
         kwargs["frequency"] = frequency
