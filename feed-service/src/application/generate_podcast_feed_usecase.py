@@ -18,7 +18,7 @@ class GeneratePodcastFeedUseCase:
 
     # Generates podcast feed .rss files for ALL podcasts located in the given base directory
     def generate_feeds(self) -> list[Path]:
-        logger.info(f"Updating podcast feeds for all podcasts")
+        logger.info(f"Updating podcast feeds for all podcasts...")
 
         feed_paths: list[Path] = []
 
@@ -27,11 +27,12 @@ class GeneratePodcastFeedUseCase:
             feed_path = self._generate_and_save_feed(podcast)
             feed_paths.append(feed_path)
 
-        logger.info(f"Updated podcast feeds for all podcasts")
+        logger.info(f"Podcast feeds for all podcasts has been updated")
         return feed_paths
 
     # Generates podcast feed .rss file for the podcast located in the given directory
     def generate_feed(self, podcast_id: str) -> Path:
+        logger.info(f"Updating podcast feed for podcast '{podcast_id}'")
         podcast = self._repo.get(podcast_id)
         feed_path = self._generate_and_save_feed(podcast)
         return feed_path

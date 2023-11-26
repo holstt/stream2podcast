@@ -28,6 +28,7 @@ class PodcastFileService:
     def __init__(self, base_dir: Path) -> None:
         super().__init__()
         self._base_dir = base_dir
+        logger.info(f"Using podcast base directory: {self._base_dir}")
 
     def read_podcast_dirs(self):
         for dir_entry in os.scandir(self._base_dir):
