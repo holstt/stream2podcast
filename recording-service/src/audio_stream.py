@@ -37,7 +37,8 @@ class HttpStreamClient:
         try:
             logger.debug(f"{format_stream_name(stream_name)}Fetching stream for: {url}")
 
-            async with aiohttp.ClientSession() as session:
+            session_timeout = aiohttp.ClientTimeout(total=None)
+            async with aiohttp.ClientSession(timeout=session_timeout) as session:
                 async with session.get(url, headers=self.headers) as response:
                     response.raise_for_status()
                     async for chunk in response.content.iter_chunked(n=self.chunk_size):
