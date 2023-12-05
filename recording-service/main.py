@@ -44,6 +44,7 @@ def resolve_dependencies(stream_url: ValidUrl):
     return audio_service, utils.TimeProvider(), audio_format
 
 
+# Starts the recording scheduler with the given config
 def main(config: AppConfig):
     scheduler = RecordingSchedulerService(*resolve_dependencies(config.stream_url))
     [
