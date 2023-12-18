@@ -1,28 +1,17 @@
-name: cicd
 on:
-    push:
-        branches:
-            - "*"
-        paths-ignore:
-            - "**.md"
-            - "docs/**"
-    pull_request:
-        branches:
-            - "*"
-        paths-ignore:
-            - "**.md"
-            - "docs/**"
+    workflow_call:
+        inputs:
+            project_dir:
+                required: true
+                type: string
 
 jobs:
-    # with a strategy for each folder in the repo
     lint-and-test:
-        strategy:
-            matrix: { dir: ["feed-service", "recording-service"] }
         runs-on: ubuntu-latest
 
         defaults:
             run:
-                working-directory: ${{ matrix.dir }}
+                working-directory: ${{ inputs.project_dir }}
 
         steps:
             - name: Checkout repository
