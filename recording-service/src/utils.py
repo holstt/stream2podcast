@@ -7,7 +7,7 @@ from typing import Any, Dict, Type, TypeVar, Union, overload
 import pendulum
 from pendulum import DateTime, Duration, Period, Time  # type: ignore
 from pendulum.tz import timezone
-from pendulum.tz.timezone import Timezone  # type: ignore
+from pendulum.tz.timezone import Timezone
 
 logger = logging.getLogger(__name__)
 

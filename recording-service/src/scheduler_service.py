@@ -1,20 +1,14 @@
-import asyncio
 import logging
-import time
 from datetime import datetime
 from typing import Optional
-
-from apscheduler.job import Job  # type: ignore
 
 # import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
-from croniter import croniter
 from pendulum import DateTime, Duration, Time  # type: ignore
-from pendulum.tz.timezone import Timezone  # type: ignore
 
 from src import utils
-from src.models import RecordingSchedule, RecordingTask
+from src.models import RecordingSchedule
 from src.recording_service import RecordAudioService
 
 logger = logging.getLogger(__name__)
