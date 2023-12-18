@@ -1,23 +1,19 @@
-name: cicd
 on:
     push:
-        branches:
-            - "*"
-        paths:
-            - "feed-service/**"
-            - "!**.md"
+        branches-ignore:
+            - main
+
+        # paths:
+        #     - "feed-service/**"
+
     pull_request:
         branches:
             - "*"
-        paths:
-            - "feed-service/**"
-            - "!**.md"
+        # paths:
+        #     - "feed-service/**"
 
 jobs:
     lint-and-test:
-        runs-on: ubuntu-latest
-        steps:
-            # Use resuable workflow
-            - uses: ./.github/workflows/reusable-workflow.yml
-              with:
-                  project_dir: "feed-service"
+        uses: ./.github/workflows/reusable-workflow.yml
+        with:
+            project_dir: "feed-service"

@@ -1,24 +1,17 @@
-name: cicd
-
 on:
     push:
-        branches:
-            - "*"
-        paths:
-            - "recording-service/**"
-            - "!**.md"
+        branches-ignore:
+            - main
+        # paths:
+        # - "recording-service/**"
     pull_request:
         branches:
             - "*"
-        paths:
-            - "recording-service/**"
-            - "!**.md"
+        # paths:
+        # - "recording-service/**"
 
 jobs:
     lint-and-test:
-        runs-on: ubuntu-latest
-        steps:
-            # Use resuable workflow
-            - uses: ./.github/workflows/reusable-workflow.yml
-              with:
-                  project_dir: recording-service
+        uses: ./.github/workflows/reusable-workflow.yml
+        with:
+            project_dir: "recording-service"
