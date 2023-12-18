@@ -1,0 +1,50 @@
+name: cicd
+on:
+    push:
+        branches:
+            - "*"
+        paths-ignore:
+            - "**.md"
+            - "docs/**"
+    pull_request:
+        branches:
+            - "*"
+        paths-ignore:
+            - "**.md"
+            - "docs/**"
+
+jobs:
+    # with a strategy for each folder in the repo
+    lint-and-test:
+        strategy:
+            matrix: { dir: ["feed-service", "recording-service"] }
+        runs-on: ubuntu-latest
+
+        defaults:
+            run:
+                working-directory: ${{ matrix.dir }}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.10"
+                  cache: "pip"
+
+            - run: |
+                  pip install poetry
+                  poetry config virtualenvs.create false
+
+            # Install all deps. for pyright to be able to run type checking
+            - run: poetry install
+
+            # Lint with type checking
+            - run: black --check .
+            - run: isort --check .
+            - run: pyright
+
+            - name: Run Tests
+              run: python -m pytest
