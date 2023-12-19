@@ -1,3 +1,5 @@
+name: cicd-recording-service
+
 on:
     push:
         branches:

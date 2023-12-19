@@ -1,3 +1,5 @@
+name: cicd-feed-service
+
 on:
     push:
         branches:
