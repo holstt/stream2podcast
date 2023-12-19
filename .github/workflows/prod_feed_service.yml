@@ -1,0 +1,20 @@
+on:
+    push:
+        branches:
+            - "main"
+
+        paths:
+            - "feed-service/**"
+
+jobs:
+    lint-and-test:
+        uses: ./.github/workflows/lint-and-test.yml
+        with:
+            project_dir: feed-service
+
+    build-and-push:
+        needs: lint-and-test
+        uses: ./.github/workflows/build-and-push.yml
+        with:
+            project_dir: feed-service
+        secrets: inherit

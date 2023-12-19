@@ -7,7 +7,7 @@ import pendulum
 import yaml
 from pendulum import Duration, Time  # type: ignore
 from pendulum.parser import parse as pendulum_parse
-from pendulum.tz.timezone import Timezone  # type: ignore
+from pendulum.tz.timezone import Timezone
 from slugify import slugify
 
 from src import utils
@@ -89,7 +89,9 @@ def _parse_data(data: dict[str, Any]) -> AppConfig:
         user_timezone = pendulum.timezone(time_zone)  # type: ignore
 
         # Parse recording schedules
-        schedules = utils.get_typed_value_or_fail(data, "recording_schedules", list)
+        schedules: list[Any] = utils.get_typed_value_or_fail(
+            data, "recording_schedules", list
+        )
 
         recording_schedules: list[RecordingSchedule] = []
         for schedule in schedules:
@@ -146,7 +148,7 @@ def _parse_schedule(
         schedule_raw,
         description,
         image_url,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
 
     return recording_schedule

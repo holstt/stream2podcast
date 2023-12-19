@@ -1,0 +1,18 @@
+on:
+    push:
+        branches-ignore:
+            - main
+        paths:
+            - "recording-service/**"
+
+    pull_request:
+        branches:
+            - "*"
+        paths:
+            - "recording-service/**"
+
+jobs:
+    recording-service:
+        uses: ./.github/workflows/lint-and-test.yml
+        with:
+            project_dir: "recording-service"

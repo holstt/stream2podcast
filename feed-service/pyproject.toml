@@ -16,14 +16,23 @@ validators = "^0.20.0"
 watchdog = "^3.0.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.1.0" 
+black = "^23.1.0"
+isort = "^5.13.2"
+pytest = "^7.4.3"
+pyright = "^1.1.341"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+# Avoids conflict
+[tool.isort]
+profile = "black"
+
 [tool.pyright]
-typeCheckingMode = "strict" 
+typeCheckingMode = "strict"
+pythonVersion = "3.10"
+
 
 # In strict, but don't show these errors
 reportUnusedImport = "none"
@@ -38,6 +47,6 @@ reportImplicitStringConcatenation = "error"
 reportPropertyTypeMismatch = "error"
 reportShadowedImports = "error"
 reportUninitializedInstanceVariable = "error"
-reportUnnecessaryTypeIgnoreComment = "error" 	
+reportUnnecessaryTypeIgnoreComment = "error"
 
 # reportUnusedCallResult = "error"
