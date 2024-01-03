@@ -96,13 +96,13 @@ First, cd into either `./recording-service` or `./feed-service` depending on whi
 
 **3. Install dependencies and create a virtual environment**
 
-```
+```bash
 poetry install
 ```
 
 **4. Activate the virtual environment**
 
-```
+```bash
 poetry shell
 ```
 
@@ -124,22 +124,24 @@ python ./main.py
 cd docker
 ```
 
-**4. Option 1: Run the docker project as current user**
+**4. Option 1: Simple setup**
 
-The `docker_run.py` helper script can be used to set up and run the docker project as the current user (rather than defaulting to root). The script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. A configuration `.ini` file is required, and its path should be passed as argument to the helper script. An example is provided in `example.ini`.
+Ensure the paths in `docker-compose.yml` are correct, then run:
+
+```bash
+docker-compose up -d
+# or
+docker-compose up -d && docker-compose logs -f
+```
+
+**4. Option 2: Use helper script**
+
+The `docker_run.py` helper script can be used to set up and run the docker project as the current user (rather than defaulting to root). Furthermore, the helper script ensures that host paths and permissions are set up correctly, and configures `docker-compose.yml` using environment variables. Configuration is set using a `.ini` file - please refer to `example.ini` for an example of the required format.
 
 Then run:
 
-```
+```bash
 python docker_run.py path/to/your/config.ini
-```
-
-**4. Option 2 (simple setup): Run the docker project as root**
-
-For a simpler setup, just replace the environment variables in `docker-compose.yml` with concrete values and delete the `user` property. Then run:
-
-```
-docker-compose up -d
 ```
 
 ## Output
