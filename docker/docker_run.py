@@ -66,12 +66,11 @@ def get_config(config_file_path: str) -> Config:
     parser = get_config_parser(config_file_path)
 
     required_mount_paths = {
-        name: Path(path).resolve().as_posix()
-        for name, path in parser.items("required_mount_paths")
+        name: Path(path) for name, path in parser.items("required_mount_paths")
     }
 
     optional_directory_mount_paths = {
-        name: Path(path).absolute().as_posix()
+        name: Path(path)
         for name, path in parser.items("optional_directory_mount_paths")
     }
 

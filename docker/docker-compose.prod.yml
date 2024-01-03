@@ -1,0 +1,29 @@
+version: "3.8"
+
+# This compose config should not be run directly.
+# Instead, use 'docker_run.py' with a 'docker.<env>.ini' file to ensure host is configured correctly.
+
+name: stream2podcast
+
+services:
+  recorder:
+    restart: on-failure:5 # Max 5 retries
+    pull_policy: always # Ensure we always pull to get the latest image
+    image: ${DOCKER_REPO_NAME?}:latest-recording-service
+    # Run as this (unprivileged) user instead of root.
+    user: "${DOCKER_USER_ID?}:${DOCKER_GROUP_ID?}"
+
+    # These volumes are expected to exist on host and accessible by the container user
+    volumes:
+      - ${RECORDER_CONFIG_PATH?}:/app/config.yml:ro
+      - ${DATA_DIR?}:/app/recordings
+
+  feed:
+    restart: on-failure:5
+    pull_policy: always
+    image: ${DOCKER_REPO_NAME?}:latest-feed-service
+    user: "${DOCKER_USER_ID?}:${DOCKER_GROUP_ID?}"
+
+    volumes:
+      - ${FEED_CONFIG_PATH?}:/app/config.yml:ro
+      - ${DATA_DIR?}:/app/recordings
